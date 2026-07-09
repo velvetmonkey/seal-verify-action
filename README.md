@@ -71,11 +71,22 @@ It does **not**:
   follows from it;
 - prove the receipt's field set is *sufficient* to authorize the effect
   (that analysis is witness-check's job);
+- tell you whether two receipts authorize the same thing — that comparison
+  is `seal receipt-diff`'s job (in seal-assurance-kit);
 - prove anything about effects that produced **no receipt at all** — an
   unmediated call leaves nothing for this action to inspect;
 - extend the Seal proof story: the Lean theorems cover the mediation kernel;
   this action is packaging around the conformance-tested verifier, tied to
   the proof by the pinned kernel hash, not by a theorem about this repo.
+
+## Where this sits in the receipt toolset
+
+| question | tool |
+|---|---|
+| Is this receipt well-formed, canonical, and re-derivable? | `seal verify` (seal-assurance-kit) — what this action runs |
+| Does the field set carry **enough** to justify the claim? | `witness-check` — the sufficiency analyzer (private) |
+| What changed between two receipts — does it touch what is **authorized**? | `seal receipt-diff` (seal-assurance-kit) |
+| Gate receipts in CI | `seal-verify-action` — this action (the sufficiency and diff checks are local tools today) |
 
 ## Why the action is not bundled
 
