@@ -25,8 +25,8 @@ packaging — no new verification logic; the action wraps the existing
 
 The action **vendors** the verifier rather than `npx`-ing a published package:
 
-- seal-assurance-kit is not on npm (family repos are private, version 0.0.1),
-  so a published-version route does not currently exist;
+- seal-assurance-kit is not published to npm (version 0.0.1), so a
+  published-version route does not currently exist;
 - vendoring makes runs hermetic — no network, no install step, no risk that a
   registry outage or a mutated dist-tag changes what a CI gate executes;
 - cost: staleness. When the kit or kernel bumps, this copy does not move.
@@ -51,8 +51,8 @@ Apache-2.0 → Apache-2.0, obligations discharged in-repo:
 - zero modifications to vendored files (so no §4b changed-file notices are
   needed) — enforced by the CI sha256 drift guard.
 
-Substantively all of this is first-party IP (seal-check, the kit, and the
-kernel are the same author), so the ceremony is belt-and-braces.
+Substantively the vendored code is first-party to the Seal family, so the
+ceremony is belt-and-braces.
 
 **Emscripten footnote for the public-flip review:**
 `kernel/wasm/seal.js` is Emscripten-generated glue and may contain Emscripten

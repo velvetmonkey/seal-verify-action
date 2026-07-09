@@ -8,7 +8,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 
 | field | value |
 |---|---|
-| upstream | `velvetmonkey/seal-assurance-kit` (private during build phase) |
+| upstream | `velvetmonkey/seal-assurance-kit` |
 | version | `0.0.1` |
 | commit | `f08bda854a44e2064283a92cdd648b8176a0b992` |
 
