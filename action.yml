@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: Apache-2.0
+name: seal-verify
+description: >-
+  Verify Seal decision receipts in CI: re-derives each receipt's verdict from
+  its own policy and call through the pinned audited kernel. Checks receipts
+  are well-formed, canonical, and re-derivable — it does NOT prove the policy
+  is correct, nor that the receipt's fields are sufficient to authorize the
+  effect, nor that an effect without a receipt didn't happen.
+author: velvetmonkey
+
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  receipts:
+    description: >-
+      Glob pattern(s) or newline-separated receipt paths, resolved under
+      working-directory. Supports **, * and ? (no character classes).
+    required: false
+    default: "**/*.receipt.json"
+  working-directory:
+    description: Directory the receipt patterns are resolved against.
+    required: false
+    default: "."
+  fail-on:
+    description: >-
+      "any" (default) fails the step if any receipt fails verification;
+      "never" reports only. Zero matched receipts always fails (fail closed).
+    required: false
+    default: "any"
+  verifier-version:
+    description: >-
+      Optional label echoed in the step summary next to the vendored verifier
+      pin. Informational only; the verifier actually used is always the
+      vendored, pinned copy.
+    required: false
+    default: ""
+
+outputs:
+  verified:
+    description: Count of receipts that verified (PASS VERIFIED).
+  failed:
+    description: >-
+      Count of receipts that failed: NOT VERIFIED, NOT MEDIATED (bypass),
+      verifier error, or a listed file that does not exist.
+
+runs:
+  using: "node20"
+  main: "dist/index.js"

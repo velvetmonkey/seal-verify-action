@@ -1,0 +1,163 @@
+{
+  "seal_receipt": "v2",
+  "tool": "db.execute",
+  "arguments": {
+    "database": "prod",
+    "sql": "drop table users"
+  },
+  "args_hash": "46657b69f15f78859ead6dd0d416cbfc9809922757ba90aa16a56b7d73afafc8",
+  "now": 1000,
+  "canonical_request": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"db.execute\",\"arguments\":{\"database\":\"prod\",\"sql\":\"drop table users\"}}}",
+  "canonical_request_sha256": "460d746ba064ab9398885158dddfd6d32f1722b0efe0d3b6085c8441e9127793",
+  "bypass": false,
+  "verdict": "BLOCK",
+  "reason": "safety kernel: 3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783",
+  "deny_kernel": "safety",
+  "certs": [
+    {
+      "kernel": "safety",
+      "verdict": "deny",
+      "reason": "3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783",
+      "certHash": "6380476400602841210"
+    },
+    {
+      "kernel": "temporal",
+      "verdict": "allow",
+      "reason": "trace ok (1 events)",
+      "certHash": "12756644985251018087"
+    }
+  ],
+  "emitted_bytes": "{\"audit\":\"{\\\"certs\\\":[{\\\"certHash\\\":\\\"6380476400602841210\\\",\\\"kernel\\\":\\\"safety\\\",\\\"reason\\\":\\\"3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783\\\",\\\"verdict\\\":\\\"deny\\\"},{\\\"certHash\\\":\\\"12756644985251018087\\\",\\\"kernel\\\":\\\"temporal\\\",\\\"reason\\\":\\\"trace ok (1 events)\\\",\\\"verdict\\\":\\\"allow\\\"}],\\\"epoch\\\":1,\\\"tool\\\":\\\"db.execute\\\",\\\"verdict\\\":\\\"deny\\\"}\",\"response\":\"{\\\"id\\\":1,\\\"jsonrpc\\\":\\\"2.0\\\",\\\"result\\\":{\\\"content\\\":[{\\\"text\\\":\\\"approval required: 3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783\\\",\\\"type\\\":\\\"text\\\"}],\\\"isError\\\":true}}\\n\",\"route\":\"block\"}",
+  "kernel_identity": {
+    "wasm_sha256": "ebd17c14668176612c49f6e2940b23df82a2c1a7cdef6759f0d6276ae997e9d0",
+    "self_verified": true,
+    "note": "Binary identity of the evaluator actually executed. Hashed in your browser from the loaded bytes and compared to a pinned constant. This is the ONLY thing verified here."
+  },
+  "asserted_provenance": {
+    "verified_in_browser": false,
+    "lean_toolchain": "leanprover/lean4:v4.28.0",
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "note": "What the public Lean proofs ASSERT about the kernel source. NOT verified in your browser and NOT part of the hash above."
+  },
+  "kernel_config": {
+    "epoch": 1,
+    "safety": {
+      "approval": {
+        "control_file": "X",
+        "ttl_seconds": 120
+      },
+      "tools": [
+        {
+          "name": "db.execute",
+          "mode": "guarded",
+          "match": {
+            "type": "contains_any_ci",
+            "arg": "sql",
+            "needles": [
+              "drop",
+              "delete",
+              "truncate"
+            ]
+          },
+          "target": [
+            {
+              "literal": "db"
+            },
+            {
+              "arg": "database"
+            },
+            {
+              "literal": "write"
+            },
+            {
+              "arg": "sql"
+            }
+          ]
+        },
+        {
+          "name": "payments.send",
+          "mode": "guarded",
+          "match": {
+            "type": "always"
+          },
+          "target": [
+            {
+              "literal": "pay"
+            }
+          ]
+        },
+        {
+          "name": "session.revoke",
+          "mode": "guarded",
+          "match": {
+            "type": "always"
+          },
+          "target": [
+            {
+              "literal": "revoke"
+            }
+          ]
+        },
+        {
+          "name": "store.update",
+          "mode": "guarded",
+          "match": {
+            "type": "always"
+          },
+          "target": [
+            {
+              "literal": "store"
+            }
+          ]
+        },
+        {
+          "name": "key.use",
+          "mode": "guarded",
+          "match": {
+            "type": "always"
+          },
+          "target": [
+            {
+              "literal": "key"
+            }
+          ]
+        },
+        {
+          "name": "approve",
+          "mode": "deny",
+          "match": {
+            "type": "always"
+          },
+          "target": []
+        }
+      ]
+    },
+    "temporal": {
+      "policies": []
+    },
+    "consensus": {
+      "roster": [
+        1,
+        2,
+        3
+      ],
+      "votes_file": "X",
+      "high_stakes": [
+        "payments.send"
+      ]
+    },
+    "convergence": {
+      "tools": [
+        {
+          "tool": "store.update",
+          "op_arg": "op"
+        }
+      ]
+    }
+  },
+  "granted_capabilities": []
+}

@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: Apache-2.0
+name: selftest
+on:
+  push:
+  pull_request:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pass fixtures verify
+        id: pass
+        uses: ./
+        with:
+          receipts: fixtures/pass/**/*.receipt.json
+      - name: assert pass outputs
+        run: |
+          test "${{ steps.pass.outputs.verified }}" = "3"
+          test "${{ steps.pass.outputs.failed }}" = "0"
+
+      - name: bypass receipt must fail the step
+        id: bypass
+        uses: ./
+        continue-on-error: true
+        with:
+          receipts: fixtures/fail/bypass.receipt.json
+      - name: assert bypass failed
+        run: |
+          test "${{ steps.bypass.outcome }}" = "failure"
+          test "${{ steps.bypass.outputs.verified }}" = "0"
+          test "${{ steps.bypass.outputs.failed }}" = "1"
+
+      - name: zero matches must fail closed
+        id: nomatch
+        uses: ./
+        continue-on-error: true
+        with:
+          receipts: no/such/dir/**/*.receipt.json
+          fail-on: never
+      - name: assert nomatch failed despite fail-on never
+        run: |
+          test "${{ steps.nomatch.outcome }}" = "failure"
+
+      - name: fail-on never reports but does not fail
+        id: never
+        uses: ./
+        with:
+          receipts: fixtures/**/*.receipt.json
+          fail-on: never
+      - name: assert never outputs
+        run: |
+          test "${{ steps.never.outputs.verified }}" = "3"
+          test "${{ steps.never.outputs.failed }}" = "1"
+
+      - name: working-directory and newline multi-pattern
+        id: wd
+        uses: ./
+        with:
+          working-directory: fixtures
+          receipts: |
+            pass/**/*.receipt.json
+            fail/bypass.receipt.json
+          fail-on: never
+      - name: assert wd outputs
+        run: |
+          test "${{ steps.wd.outputs.verified }}" = "3"
+          test "${{ steps.wd.outputs.failed }}" = "1"

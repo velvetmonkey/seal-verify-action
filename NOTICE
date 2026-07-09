@@ -1,0 +1,28 @@
+seal-verify-action
+Copyright (c) 2026 Ben Cassie
+
+This product vendors the receipt verifier from the seal-assurance-kit
+project (Apache-2.0), pinned in VENDORED.md:
+  vendor/seal-assurance-kit/src/verify.cjs
+  vendor/seal-assurance-kit/kernel/runner.cjs
+  vendor/seal-assurance-kit/kernel/receipt-format.js
+
+seal-assurance-kit carries the following attribution, reproduced here
+because those files are redistributed transitively:
+
+  seal assurance kit
+  Copyright (c) 2026 Ben Cassie
+
+  This product vendors the public seal kernel and its browser glue from the
+  seal-check project (Apache-2.0):
+    kernel/kernel.js, kernel/seal-config.js, kernel/wasm/seal.js, kernel/wasm/seal.wasm
+
+  The compiled kernel (seal.wasm) is the audited public build; its sha256 is pinned
+  in kernel/kernel.js (KERNEL_WASM_SHA256) and checked on every `seal verify` run.
+
+In this repository those files live under vendor/seal-assurance-kit/kernel/.
+
+vendor/seal-assurance-kit/kernel/wasm/seal.js is Emscripten-generated
+JavaScript glue and may contain runtime snippets from the Emscripten
+project, distributed under the MIT license (https://emscripten.org),
+which is compatible with Apache-2.0.
