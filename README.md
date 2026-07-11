@@ -1,29 +1,26 @@
 # seal-verify-action
 
-Verify [Seal](https://github.com/velvetmonkey/seal) decision receipts in CI.
-For every matched receipt the action re-derives the verdict from the receipt's
-own policy and call through the pinned, audited Seal kernel, and fails the
-build when a receipt does not re-derive.
+**Add this to CI. A receipt that no longer re-derives turns the build red.**
+
+For every matched receipt the action re-derives the verdict from the receipt's own policy and call through the pinned, audited Seal kernel. Tampered, bypassed, or stale = fail the step (with annotations on the PR).
 
 ![Action](https://img.shields.io/badge/type-JS%20action%20(node20)-black)
 ![Domain](https://img.shields.io/badge/domain-MCP%20mediation-informational)
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 
-## Usage
+## Luxury 10-second onboarding (copy-paste)
 
 ```yaml
-jobs:
-  receipts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: velvetmonkey/seal-verify-action@v1
-        with:
-          receipts: "**/*.receipt.json"
+- uses: velvetmonkey/seal-verify-action@v1
+  with:
+    receipts: "**/*.receipt.json"
 ```
 
-That is the whole integration: a PR that changes a mediated tool must ship
-receipts that still re-derive, or the check goes red.
+A PR that touches a mediated effect must ship receipts that still prove. Zero config beyond the glob.
+
+## Usage
+
+... (rest unchanged)
 
 ## Inputs
 
