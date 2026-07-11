@@ -10,13 +10,19 @@ For every matched receipt the action re-derives the verdict from the receipt's o
 
 ## Luxury 10-second onboarding (copy-paste)
 
+```bash
+bash scripts/showcase.sh
+```
+
+(Shows usage + fixtures.) In CI:
+
 ```yaml
 - uses: velvetmonkey/seal-verify-action@v1
   with:
     receipts: "**/*.receipt.json"
 ```
 
-A PR that touches a mediated effect must ship receipts that still prove. Zero config beyond the glob.
+Bad receipt = red build. Visible in terminal.
 
 ## Usage
 
