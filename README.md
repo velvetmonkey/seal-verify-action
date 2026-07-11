@@ -14,7 +14,19 @@ For every matched receipt the action re-derives the verdict from the receipt's o
 bash scripts/showcase.sh
 ```
 
-(Shows usage + fixtures.) In CI:
+Runs the **same vendored verifier the action runs**, over the bundled fixtures:
+`fixtures/pass/allow.receipt.json` prints `PASS VERIFIED`; `fixtures/fail/bypass.receipt.json`
+prints `NOT MEDIATED` and fails — exactly the receipt that would turn a build red. Exit 0
+when both behave as documented.
+
+Verify a single receipt yourself (no CI, no network):
+
+```bash
+node -e 'require("./vendor/seal-assurance-kit/src/verify.cjs").verify("fixtures/pass/allow.receipt.json")'
+# -> receipt verdict: ALLOW ... PASS VERIFIED
+```
+
+Then in CI:
 
 ```yaml
 - uses: velvetmonkey/seal-verify-action@v1
@@ -35,7 +47,27 @@ These are the four explicit places where Seal's proofs stop. They are strengths 
 
 ## Usage
 
-... (rest unchanged)
+A complete workflow that fails the build on any receipt that no longer re-derives:
+
+```yaml
+name: verify-receipts
+on: [push, pull_request]
+jobs:
+  seal-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: velvetmonkey/seal-verify-action@v1
+        with:
+          receipts: "**/*.receipt.json"   # glob(s) or newline-separated paths
+          # working-directory: .          # where patterns resolve
+          # fail-on: any                  # 'never' to report without failing
+```
+
+Every matched receipt is re-derived through the pinned, vendored verifier; a tampered,
+bypassed, or stale receipt gets an `::error` annotation on its file and fails the step.
+A glob that matches nothing fails closed. Full knobs in [Inputs](#inputs) below; the exact
+checks in [What this checks — and what it does not](#what-this-checks--and-what-it-does-not).
 
 ## Inputs
 
