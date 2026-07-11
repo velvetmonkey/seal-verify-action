@@ -88,6 +88,11 @@ It does **not**:
 | What changed between two receipts — does it touch what is **authorized**? | `seal receipt-diff` (seal-assurance-kit) |
 | Gate receipts in CI | `seal-verify-action` — this action (the sufficiency and diff checks are local tools today) |
 
+Receipts are produced by [seal-host](https://github.com/velvetmonkey/seal-host), the
+deployable gate this action's checks sit downstream of; the vendored verifier's home is
+[seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit). Family map:
+[seal](https://github.com/velvetmonkey/seal).
+
 ## Why the action is not bundled
 
 `dist/index.js` is a plain entry, not an ncc/esbuild bundle. The vendored
