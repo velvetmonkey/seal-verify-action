@@ -10,6 +10,20 @@ const crypto = require("crypto");
 const ROOT = path.resolve(__dirname);
 const WASM_DIR = path.join(ROOT, "wasm");
 let _M = null, _cfg = null, _K = null;
+const CONFIG_PUBKEY = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
+const CONFIG_PRIVATE_KEY = crypto.createPrivateKey({
+  key: Buffer.from(
+    "302e020100300506032b657004220420" +
+    "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60", "hex"),
+  format: "der", type: "pkcs8",
+});
+
+function signConfig(config) {
+  const payload = JSON.stringify(config);
+  const signature = crypto.sign(null, Buffer.from(payload, "utf8"), CONFIG_PRIVATE_KEY).toString("hex");
+  return { payload, signature, pubkey: CONFIG_PUBKEY,
+    envelope: JSON.stringify({ payload, signature }) };
+}
 
 async function load() {
   if (_M) return { M: _M, cfg: _cfg, K: _K };
@@ -35,8 +49,9 @@ function kernelSha() {
 // kernel.js buildReceipt.
 async function decide(config, { tool, args = {}, approvals = [], now = 1000 }) {
   const { M, cfg, K } = await load();
+  const signedConfig = signConfig(config);
   const ir = JSON.parse(M.ccall("seal_init", "string", ["string", "string"],
-    [cfg.buildEnvelope(config), cfg.PUBKEY]));
+    [signedConfig.envelope, signedConfig.pubkey]));
   if (ir.ok !== true) throw new Error("seal_init failed: " + JSON.stringify(ir));
   const step = cfg.buildStepInput({ tool, args, approvals, now });
   const raw = M.ccall("seal_decide", "string", ["string"], [step]);
@@ -44,17 +59,31 @@ async function decide(config, { tool, args = {}, approvals = [], now = 1000 }) {
   const computed = kernelSha();
   const sha = { computed, pinned: K.KERNEL_WASM_SHA256, match: computed === K.KERNEL_WASM_SHA256 };
   const base = JSON.parse(K.canonicalReceiptJson(K.buildReceipt({
-    call: { tool, args, approvals, now }, config, parsed, raw, sha,
+    call: { tool, args, approvals, now }, config, parsed, raw, sha, signedConfig,
   })));
   return { raw, verdict: base.verdict, receipt: base };
+}
+
+// Verification path: consume the receipt's exact authenticated bytes. Never
+// signs, substitutes a policy, or trusts a receipt-supplied authority claim.
+async function decideSigned(signedConfig, { tool, args = {}, approvals = [], now = 1000 }) {
+  const { M, cfg } = await load();
+  const envelope = JSON.stringify({ payload: signedConfig.payload, signature: signedConfig.signature });
+  const ir = JSON.parse(M.ccall("seal_init", "string", ["string", "string"],
+    [envelope, signedConfig.pubkey]));
+  if (ir.ok !== true) return { signature_valid: false, initError: ir.error || JSON.stringify(ir) };
+  const step = cfg.buildStepInput({ tool, args, approvals, now });
+  const raw = M.ccall("seal_decide", "string", ["string"], [step]);
+  return { signature_valid: true, raw, parsed: cfg.parseVerdict(raw, tool) };
 }
 
 // Ordered multi-step session in ONE init (stateful kernels: temporal/budget/linear
 // only fire across a trace). Returns the LAST step's verdict.
 async function decideSeq(config, steps, tool) {
   const { M, cfg } = await load();
+  const signedConfig = signConfig(config);
   const ir = JSON.parse(M.ccall("seal_init", "string", ["string", "string"],
-    [cfg.buildEnvelope(config), cfg.PUBKEY]));
+    [signedConfig.envelope, signedConfig.pubkey]));
   if (ir.ok !== true) throw new Error("seal_init failed: " + JSON.stringify(ir));
   let raw, step;
   steps.forEach((s, i) => {
@@ -68,4 +97,4 @@ async function decideSeq(config, steps, tool) {
 
 async function pinnedSha() { const { K } = await load(); return K.KERNEL_WASM_SHA256; }
 
-module.exports = { load, decide, decideSeq, kernelSha, pinnedSha };
+module.exports = { load, decide, decideSigned, decideSeq, kernelSha, pinnedSha, CONFIG_PUBKEY };

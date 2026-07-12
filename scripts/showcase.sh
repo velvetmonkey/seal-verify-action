@@ -7,10 +7,11 @@ cd "$(dirname "$0")/.."
 
 exec node - "$@" <<'NODE'
 const { verify } = require("./vendor/seal-assurance-kit/src/verify.cjs");
+const PIN = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
 
 const cases = [
-  { file: "fixtures/pass/allow.receipt.json", expect: true,  note: "a good ALLOW receipt -> PASS VERIFIED" },
-  { file: "fixtures/fail/bypass.receipt.json", expect: false, note: "a bypass receipt -> NOT MEDIATED, fails the step" },
+  { file: "fixtures/pass/allow.receipt.json", expect: "authorised", note: "a good ALLOW receipt + independent pin -> AUTHORISED" },
+  { file: "fixtures/fail/bypass.receipt.json", expect: "failure", note: "a bypass receipt -> NOT MEDIATED, fails the step" },
 ];
 
 (async () => {
@@ -21,7 +22,7 @@ const cases = [
     console.log("================================================================");
     let passed;
     try {
-      passed = await verify(c.file);
+      passed = (await verify(c.file, { expectedConfigPubkey: PIN })).outcome;
     } catch (e) {
       console.error("verifier error:", e.message);
       passed = "error";
@@ -33,7 +34,7 @@ const cases = [
   }
   console.log("\n================================================================");
   console.log(ok
-    ? "showcase OK: good receipt VERIFIED, bypass receipt FAILED — exactly what the CI gate does."
+    ? "showcase OK: good receipt AUTHORISED, bypass receipt FAILED — exactly what the CI gate does."
     : "showcase FAILED: fixtures did not verify as documented.");
   console.log("In CI, `bypass.receipt.json` failing is a RED build. That is the point.");
   process.exit(ok ? 0 : 1);

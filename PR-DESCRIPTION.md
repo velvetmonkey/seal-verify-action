@@ -1,8 +1,8 @@
 # seal-verify-action: reusable GitHub Action wrapping `seal verify`
 
-Distribution move: Seal receipt verification as a three-line CI step. Pure
-packaging — no new verification logic; the action wraps the existing
-`seal verify` from seal-assurance-kit.
+Distribution move: Seal receipt authorisation as a CI gate. The action vendors
+the df42 closure and mirrors seal-check's shipped signed-config and authority
+checks so green has one meaning: authorised.
 
 ## What's here
 
@@ -11,15 +11,15 @@ packaging — no new verification logic; the action wraps the existing
 - `dist/index.js` + `lib/` — input parsing, hand-rolled glob subset
   (`**`/`*`/`?`; node20 has no `fs.glob` and the repo is zero-dep), sequential
   in-process verification (the wasm kernel is a module singleton), `::error`
-  annotations, step-summary table, `verified`/`failed` outputs.
-- `vendor/seal-assurance-kit/` — the seven-file dependency closure of
-  `seal verify`, byte-identical to upstream, sha256-pinned in VENDORED.md and
-  re-checked by CI on every run.
+  annotations, step-summary table, receipt counts, and tri-state outputs.
+- `vendor/seal-assurance-kit/` — the seven-file df42 dependency closure based
+  on assurance-kit `0db03ef`, with signed-config behavior pinned to
+  seal-check `400079c`; every resulting byte is checksum-pinned in VENDORED.md.
 - `fixtures/` — the kit's receipt corpus: allow/block/crosstool must verify,
   bypass must fail.
 - Workflows: `ci.yml` (unit tests, no-mutation guard, vendor drift guard) and
   `selftest.yml` (runs the action against the fixtures, asserting both the
-  passing and the failing paths, zero-match fail-closed, and report-only mode).
+  authorised, bypass, unpinned, and zero-match fail-closed paths).
 
 ## Load-bearing decision 1: vendored pin, not npx
 
@@ -48,8 +48,9 @@ Apache-2.0 → Apache-2.0, obligations discharged in-repo:
   redistribute those transitively (§4d);
 - per-file `SPDX-License-Identifier: Apache-2.0` headers retained on all
   vendored files;
-- zero modifications to vendored files (so no §4b changed-file notices are
-  needed) — enforced by the CI sha256 drift guard.
+- modified vendored JS files retain SPDX headers and are explicitly attributed
+  to their assurance-kit base and seal-check signed-config reference; CI pins
+  the resulting bytes.
 
 Substantively the vendored code is first-party to the Seal family, so the
 ceremony is belt-and-braces.
@@ -74,9 +75,10 @@ that produced no receipt.
 - `npm test`: 30/30 (`node --test`) — glob subset, aggregation, annotation
   escaping, plumbing, and end-to-end runs over the fixture corpus with fake
   `GITHUB_OUTPUT`/`GITHUB_STEP_SUMMARY`.
-- Local simulated-action runs (real `dist/index.js` entry): pass corpus →
-  exit 0, 3/0; bypass → exit 1, 0/1 + `::error file=`; zero-match with
-  `fail-on: never` → still exit 1; full corpus report-only → exit 0, 3/1.
-- Vendored files byte-identical to kit @ `f08bda85` (sha256-compared at copy
-  time and on every CI run).
+- Local simulated-action runs: matching pin → exit 0; verification or wrong
+  authority → exit 1; malformed configuration → exit 2; authentic and
+  replay-consistent but unpinned → exit 3. GitHub-native `continue-on-error`
+  is the only report-only mechanism.
+- Vendored closure pinned to assurance-kit `0db03ef`, seal-check `400079c`,
+  and df42 wasm; checksums are re-checked on every CI run.
 - `selftest` workflow green (see Actions tab).

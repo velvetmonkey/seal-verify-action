@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 name: seal-verify
 description: >-
-  Verify Seal decision receipts in CI: re-derives each receipt's verdict from
-  its own policy and call through the pinned audited kernel. Checks receipts
-  are well-formed, canonical, and re-derivable — it does NOT prove the policy
-  is correct, nor that the receipt's fields are sufficient to authorize the
-  effect, nor that an effect without a receipt didn't happen.
+  Authorise Seal decision receipts in CI: verifies the exact signed config,
+  replays through the pinned audited kernel, and requires an independently
+  provisioned operator public-key pin. Green always means authorised.
 author: velvetmonkey
 
 branding:
@@ -23,12 +21,11 @@ inputs:
     description: Directory the receipt patterns are resolved against.
     required: false
     default: "."
-  fail-on:
+  expected-config-pubkey:
     description: >-
-      "any" (default) fails the step if any receipt fails verification;
-      "never" reports only. Zero matched receipts always fails (fail closed).
-    required: false
-    default: "any"
+      Required independently provisioned Ed25519 config-signer public key,
+      exactly 64 lowercase hexadecimal characters. Never source this from the receipt.
+    required: true
   verifier-version:
     description: >-
       Optional label echoed in the step summary next to the vendored verifier
@@ -39,11 +36,17 @@ inputs:
 
 outputs:
   verified:
-    description: Count of receipts that verified (PASS VERIFIED).
+    description: Count of receipts authorised by the independently pinned signer.
   failed:
     description: >-
       Count of receipts that failed: NOT VERIFIED, NOT MEDIATED (bypass),
       verifier error, or a listed file that does not exist.
+  signature_valid:
+    description: True only when every matched receipt has a valid Ed25519 signed_config.
+  kernel_replay_consistent:
+    description: True only when every matched receipt replays byte-identically through df42.
+  authority_trusted:
+    description: True only when every signer matches expected-config-pubkey; otherwise false or unpinned.
 
 runs:
   using: "node20"

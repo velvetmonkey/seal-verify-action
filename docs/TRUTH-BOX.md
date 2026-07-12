@@ -10,6 +10,6 @@
 
 <!-- truthbox:begin -->
 > **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
-> **Claim:** in CI, the action re-derives every matched receipt through the pinned vendored verifier; a receipt that no longer re-derives — tampered, bypassed, or stale — turns the build red.
-> **Non-claim:** it does NOT re-prove the kernel — it inherits it from the pinned copy (see VENDORED.md) — and it trusts the receipt's producer (seal-host). A green build attests re-derivation of the receipts it was handed, not that the producing system is correct, nor that an unmediated effect left a receipt to check.
+> **Claim:** in CI, green means every matched receipt has a valid signed config, replayed byte-identically through df42, and its signer matched the independently configured operator pin.
+> **Non-claim:** it does NOT re-prove the kernel or establish that the pinned operator chose a good policy. It cannot say anything about an effect that produced no receipt.
 <!-- truthbox:end -->

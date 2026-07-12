@@ -1,8 +1,8 @@
 # seal-verify-action
 
-**Add this to CI. A receipt that no longer re-derives turns the build red.**
+**Add this to CI. Green means the signed config is authentic, replay-consistent, and authorised by your independently provisioned operator-key pin.**
 
-For every matched receipt the action re-derives the verdict from the receipt's own policy and call through the pinned, audited Seal kernel. Tampered, bypassed, or stale = fail the step (with annotations on the PR).
+For every matched receipt the action verifies its exact Ed25519 `signed_config`, replays it through the pinned df42 kernel, and requires the signer to match `expected-config-pubkey`. Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
 
 ## Luxury 10-second onboarding (copy-paste)
 
@@ -11,15 +11,15 @@ bash scripts/showcase.sh
 ```
 
 Runs the **same vendored verifier the action runs**, over the bundled fixtures:
-`fixtures/pass/allow.receipt.json` prints `PASS VERIFIED`; `fixtures/fail/bypass.receipt.json`
+`fixtures/pass/allow.receipt.json` prints `PASS AUTHORISED`; `fixtures/fail/bypass.receipt.json`
 prints `NOT MEDIATED` and fails — exactly the receipt that would turn a build red. Exit 0
 when both behave as documented.
 
 Verify a single receipt yourself (no CI, no network):
 
 ```bash
-node -e 'require("./vendor/seal-assurance-kit/src/verify.cjs").verify("fixtures/pass/allow.receipt.json")'
-# -> receipt verdict: ALLOW ... PASS VERIFIED
+node -e 'require("./vendor/seal-assurance-kit/src/verify.cjs").verify("fixtures/pass/allow.receipt.json", {expectedConfigPubkey:"d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"})'
+# -> receipt verdict: ALLOW ... PASS AUTHORISED
 ```
 
 Then in CI:
@@ -28,6 +28,7 @@ Then in CI:
 - uses: velvetmonkey/seal-verify-action@v1
   with:
     receipts: "**/*.receipt.json"
+    expected-config-pubkey: ${{ vars.SEAL_CONFIG_PUBKEY }}
 ```
 
 Bad receipt = red build. Visible in terminal.
@@ -40,8 +41,8 @@ Bad receipt = red build. Visible in terminal.
 
 <!-- truthbox:begin -->
 > **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
-> **Claim:** in CI, the action re-derives every matched receipt through the pinned vendored verifier; a receipt that no longer re-derives — tampered, bypassed, or stale — turns the build red.
-> **Non-claim:** it does NOT re-prove the kernel — it inherits it from the pinned copy (see VENDORED.md) — and it trusts the receipt's producer (seal-host). A green build attests re-derivation of the receipts it was handed, not that the producing system is correct, nor that an unmediated effect left a receipt to check.
+> **Claim:** in CI, green means every matched receipt has a valid signed config, replayed byte-identically through df42, and its signer matched the independently configured operator pin.
+> **Non-claim:** it does NOT re-prove the kernel or establish that the pinned operator chose a good policy. It cannot say anything about an effect that produced no receipt.
 <!-- truthbox:end -->
 > Map: canonical claims in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) · truth box in [docs/TRUTH-BOX.md](docs/TRUTH-BOX.md) · family: [seal](https://github.com/velvetmonkey/seal). Inheritance, not ownership — the verifier's home is [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit) (see [VENDORED.md](VENDORED.md)).
 
@@ -67,12 +68,12 @@ jobs:
       - uses: velvetmonkey/seal-verify-action@v1
         with:
           receipts: "**/*.receipt.json"   # glob(s) or newline-separated paths
+          expected-config-pubkey: ${{ vars.SEAL_CONFIG_PUBKEY }}
           # working-directory: .          # where patterns resolve
-          # fail-on: any                  # 'never' to report without failing
 ```
 
-Every matched receipt is re-derived through the pinned, vendored verifier; a tampered,
-bypassed, or stale receipt gets an `::error` annotation on its file and fails the step.
+Every matched receipt is authenticated and re-derived through the pinned verifier; a tampered,
+bypassed, stale, unpinned, or unauthorised receipt gets an annotation and fails the step.
 A glob that matches nothing fails closed. Full knobs in [Inputs](#inputs) below; the exact
 checks in [What this checks — and what it does not](#what-this-checks--and-what-it-does-not).
 
@@ -82,15 +83,18 @@ checks in [What this checks — and what it does not](#what-this-checks--and-wha
 |---|---|---|
 | `receipts` | `**/*.receipt.json` | Glob pattern(s) or newline-separated paths, resolved under `working-directory`. Supports `**`, `*`, `?` and literal paths; no character classes. |
 | `working-directory` | `.` | Directory patterns are resolved against. |
-| `fail-on` | `any` | `any`: fail the step if any receipt fails. `never`: report only (annotations, summary, and outputs are still produced). |
+| `expected-config-pubkey` | required | Independently provisioned 64-lowercase-hex Ed25519 operator public key. Never copy it from the receipt. |
 | `verifier-version` | `""` | Optional label echoed in the step summary next to the vendored pin. Informational only. |
 
 ## Outputs
 
 | output | meaning |
 |---|---|
-| `verified` | Count of receipts that verified (PASS VERIFIED). |
+| `verified` | Count of receipts that are fully authorised. |
 | `failed` | Count that failed: NOT VERIFIED, NOT MEDIATED (bypass receipt), verifier error, or a listed file that does not exist. |
+| `signature_valid` | `true` only when every matched receipt has a valid Ed25519 config signature. |
+| `kernel_replay_consistent` | `true` only when every matched receipt replays byte-identically. |
+| `authority_trusted` | `true` only when every signer matches the operator pin; otherwise `false` or `unpinned`. |
 
 ## Behaviour
 
@@ -98,7 +102,7 @@ checks in [What this checks — and what it does not](#what-this-checks--and-wha
   land on the PR diff.
 - A grouped pass/fail table is written to the job's step summary, including
   the exact vendored verifier version and commit.
-- **Zero matched receipts fails the step regardless of `fail-on`** — a glob
+- **Zero matched receipts fails the step** — a glob
   that matches nothing is a misconfiguration, and a gate that silently passes
   on a typo is worse than no gate. Missing literal paths likewise count as
   failures rather than being dropped.
@@ -107,13 +111,16 @@ checks in [What this checks — and what it does not](#what-this-checks--and-wha
   `seal verify` from seal-assurance-kit (see [VENDORED.md](VENDORED.md)) —
   consumers install nothing.
 
+There is deliberately no report-only success mode. If a workflow wants to observe an honest red result without stopping later jobs, use GitHub's native `continue-on-error: true` on the step and read the tri-state outputs. The action itself never turns failed verification green.
+
 ## What this checks — and what it does not
 
-For each receipt, the vendored verifier checks the receipt is **well-formed**
+For each receipt, the verifier checks the receipt is **well-formed**
 (schema-valid), **canonical** (stored canonical request equals the line
 re-derived from the receipt's own tool + arguments, hashes match), and
-**re-derivable** (the same pinned kernel, fed the receipt's own policy and
-call, reproduces the verdict and the emitted decision bytes). Bypass receipts
+**authenticated and re-derivable** (df42 accepts the receipt's exact signed bytes,
+the signed payload byte-binds `kernel_config`, and the same call reproduces the
+verdict and emitted bytes), and **authorised** (the signer matches the independent pin). Bypass receipts
 are reported NOT MEDIATED, never "verified".
 
 It does **not**:
@@ -147,8 +154,8 @@ specific to being a CI wrapper. Canonical copy: [docs/LIMITATIONS.md](docs/LIMIT
 - Seal does NOT make the AI smarter or prevent hallucinations; it stops an unapproved effect.
 - Axiom footprint {propext, Classical.choice, Quot.sound} is the minimal classical fragment; no extra axioms.
 - seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned copy of `seal verify` (see VENDORED.md) and inherits exactly that verifier's guarantees and limits — no more.
-- A green build attests only that the matched receipts re-derived through the pinned verifier; it is NOT evidence that the producing system (seal-host) is correct, nor that any unmediated effect left a receipt to check.
-- The action adds no theorem about itself; its trust rests on the pin (the sha256 of the vendored verifier) and the receipt's producer, not on this repo.
+- A green build attests that matched receipts authenticated, replayed consistently, and matched the configured authority; it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
+- The action adds no theorem about itself; its trust rests on the pinned verifier bytes and the independently provisioned operator public key, not on receipt-supplied authority claims.
 <!-- claims:end -->
 
 ## Where this sits in the receipt toolset
@@ -181,8 +188,8 @@ npm test          # node --test: glob, reporting, plumbing, end-to-end on fixtur
 ```
 
 The `selftest` workflow runs the action against the bundled fixture corpus:
-three receipts that must verify, one bypass receipt that must fail the step,
-a zero-match misconfiguration that must fail closed, and a report-only run.
+three receipts that must authorise, plus bypass, unpinned, and zero-match paths
+that must fail closed. Report-only workflows use step-level `continue-on-error`.
 
 ## License
 

@@ -9,6 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "gen:fixtures": "node scripts/gen-fixtures.cjs",
     "test": "node --test"
   }
 }

@@ -19,8 +19,8 @@ function fakeStdout() {
 }
 
 test("getInput reads INPUT_* incl. dashed names, applies default on empty", () => {
-  const env = { "INPUT_FAIL-ON": "never", INPUT_RECEIPTS: "" };
-  assert.equal(gh.getInput(env, "fail-on", "any"), "never");
+  const env = { "INPUT_WORKING-DIRECTORY": "never", INPUT_RECEIPTS: "" };
+  assert.equal(gh.getInput(env, "working-directory", "."), "never");
   assert.equal(gh.getInput(env, "receipts", "**/*.receipt.json"), "**/*.receipt.json");
   assert.equal(gh.getInput(env, "missing", "dflt"), "dflt");
 });

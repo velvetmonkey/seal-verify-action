@@ -8,7 +8,7 @@ const { summarize, toMarkdown } = require("../lib/report.js");
 const pin = require("../lib/pin.js");
 
 const RESULTS = [
-  { relPath: "a.receipt.json", status: "verified", detail: "" },
+  { relPath: "a.receipt.json", status: "verified", detail: "", signature_valid: true, kernel_replay_consistent: true, authority_trusted: true },
   { relPath: "b.receipt.json", status: "not-verified", detail: "verdict re-derives identically" },
   { relPath: "c.receipt.json", status: "not-mediated", detail: "NOT MEDIATED (bypass receipt)" },
   { relPath: "d.receipt.json", status: "error", detail: "verifier internal error: boom" },
@@ -30,7 +30,7 @@ test("markdown carries pin, patterns, one row per result, counts", () => {
   assert.match(md, /seal-assurance-kit 0\.0\.1/);
   assert.match(md, new RegExp(pin.KIT_COMMIT.slice(0, 7)));
   assert.match(md, /\*\*1 verified, 4 failed\.\*\*/);
-  assert.match(md, /✅ VERIFIED/);
+  assert.match(md, /✅ AUTHORISED/);
   assert.match(md, /❌ NOT MEDIATED \(bypass\)/);
   assert.match(md, /❌ NOT FOUND/);
   const rows = md.split("\n").filter((l) => l.startsWith("| `"));

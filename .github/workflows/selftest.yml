@@ -15,6 +15,7 @@ jobs:
         uses: ./
         with:
           receipts: fixtures/pass/**/*.receipt.json
+          expected-config-pubkey: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
       - name: assert pass outputs
         run: |
           test "${{ steps.pass.outputs.verified }}" = "3"
@@ -26,6 +27,7 @@ jobs:
         continue-on-error: true
         with:
           receipts: fixtures/fail/bypass.receipt.json
+          expected-config-pubkey: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
       - name: assert bypass failed
         run: |
           test "${{ steps.bypass.outcome }}" = "failure"
@@ -38,21 +40,23 @@ jobs:
         continue-on-error: true
         with:
           receipts: no/such/dir/**/*.receipt.json
-          fail-on: never
-      - name: assert nomatch failed despite fail-on never
+          expected-config-pubkey: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
+      - name: assert nomatch failed closed
         run: |
           test "${{ steps.nomatch.outcome }}" = "failure"
 
-      - name: fail-on never reports but does not fail
-        id: never
+      - name: missing pin is authentic but unpinned and fails
+        id: unpinned
         uses: ./
+        continue-on-error: true
         with:
-          receipts: fixtures/**/*.receipt.json
-          fail-on: never
-      - name: assert never outputs
+          receipts: fixtures/pass/**/*.receipt.json
+      - name: assert unpinned failed honestly
         run: |
-          test "${{ steps.never.outputs.verified }}" = "3"
-          test "${{ steps.never.outputs.failed }}" = "1"
+          test "${{ steps.unpinned.outcome }}" = "failure"
+          test "${{ steps.unpinned.outputs.signature_valid }}" = "true"
+          test "${{ steps.unpinned.outputs.kernel_replay_consistent }}" = "true"
+          test "${{ steps.unpinned.outputs.authority_trusted }}" = "unpinned"
 
       - name: working-directory and newline multi-pattern
         id: wd
@@ -62,7 +66,8 @@ jobs:
           receipts: |
             pass/**/*.receipt.json
             fail/bypass.receipt.json
-          fail-on: never
+          expected-config-pubkey: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
+        continue-on-error: true
       - name: assert wd outputs
         run: |
           test "${{ steps.wd.outputs.verified }}" = "3"

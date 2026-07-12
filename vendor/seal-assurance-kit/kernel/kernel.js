@@ -14,11 +14,11 @@ import { buildEnvelope, buildStepInput, parseVerdict, PUBKEY } from "./seal-conf
 import { assembleReceiptV2, canonicalRequest, canonicalRequestSha256 } from "./receipt-format.js";
 
 // --- pinned kernel identity (see AUDIT.md) ----------------------------------
-// sha256 of wasm/seal.wasm, computed 2026-07-05. This is THE kernel id and the
+// sha256 of wasm/seal.wasm, computed 2026-07-12. This is THE kernel id and the
 // ONLY thing seal-check verifies in the browser. Toolchain + axioms below are
 // LABELLED provenance the public Lean proofs assert — NOT verified here, NOT
 // blended into the hash.
-export const KERNEL_WASM_SHA256 = "ebd17c14668176612c49f6e2940b23df82a2c1a7cdef6759f0d6276ae997e9d0";
+export const KERNEL_WASM_SHA256 = "df42cbada2297741bfeab99f222b96ac02e43a4ce8695b24922b425b8d66b1e8";
 export const WASM_URL = "wasm/seal.wasm";
 export const LEAN_TOOLCHAIN = "leanprover/lean4:v4.28.0";
 export const KERNEL_AXIOMS = ["propext", "Classical.choice", "Quot.sound"];
@@ -144,8 +144,11 @@ export async function decideSeqRaw(config, steps, tool) {
 // v2 approval block: targets pasted by a human into this page are an
 // "interactive" channel approval with no nonce/issued_at/expiry to assert;
 // args_hash and approval.policy_hash are derived inside the seam.
-export function buildReceipt({ call, config, parsed, raw, sha }) {
+export function buildReceipt({ call, config, parsed, raw, sha, signedConfig }) {
   const verdict = parsed.verdict === "DENY" ? "BLOCK" : parsed.verdict; // ALLOW | BLOCK | ERROR
+  const authorization = verdict === "ALLOW"
+    ? ((call.approvals || []).length ? "approval" : "explicit_policy_allow")
+    : undefined;
   return assembleReceiptV2({
     tool: call.tool,
     arguments: call.args,
@@ -154,7 +157,8 @@ export function buildReceipt({ call, config, parsed, raw, sha }) {
     canonical_request_sha256: canonicalRequestSha256(call.tool, call.args),
     bypass: false,
     verdict,
-    approval: verdict === "ALLOW"
+    authorization,
+    approval: authorization === "approval"
       ? { approval_identity: { channel: "interactive" } } // policy_hash derived in the seam
       : undefined,
     reason: parsed.reason,
@@ -176,6 +180,11 @@ export function buildReceipt({ call, config, parsed, raw, sha }) {
       note:
         "What the public Lean proofs ASSERT about the kernel source. NOT verified in " +
         "your browser and NOT part of the hash above.",
+    },
+    signed_config: {
+      payload: signedConfig.payload,
+      signature: signedConfig.signature,
+      pubkey: signedConfig.pubkey,
     },
     kernel_config: config,
     granted_capabilities: (call.approvals || []).map((t) => ({ target: String(t) })),
