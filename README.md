@@ -4,17 +4,6 @@
 
 For every matched receipt the action re-derives the verdict from the receipt's own policy and call through the pinned, audited Seal kernel. Tampered, bypassed, or stale = fail the step (with annotations on the PR).
 
-![Action](https://img.shields.io/badge/type-JS%20action%20(node20)-black)
-![Domain](https://img.shields.io/badge/domain-MCP%20mediation-informational)
-![License](https://img.shields.io/badge/license-Apache--2.0-blue)
-
-<!-- truthbox:begin -->
-> **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
-> **Claim:** in CI, the action re-derives every matched receipt through the pinned vendored verifier; a receipt that no longer re-derives — tampered, bypassed, or stale — turns the build red.
-> **Non-claim:** it does NOT re-prove the kernel — it inherits it from the pinned copy (see VENDORED.md) — and it trusts the receipt's producer (seal-host). A green build attests re-derivation of the receipts it was handed, not that the producing system is correct, nor that an unmediated effect left a receipt to check.
-<!-- truthbox:end -->
-> Map: canonical claims in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) · truth box in [docs/TRUTH-BOX.md](docs/TRUTH-BOX.md) · family: [seal](https://github.com/velvetmonkey/seal). Inheritance, not ownership — the verifier's home is [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit) (see [VENDORED.md](VENDORED.md)).
-
 ## Luxury 10-second onboarding (copy-paste)
 
 ```bash
@@ -44,6 +33,17 @@ Then in CI:
 Bad receipt = red build. Visible in terminal.
 
 ## Trust boundaries
+
+![Action](https://img.shields.io/badge/type-JS%20action%20(node20)-black)
+![Domain](https://img.shields.io/badge/domain-MCP%20mediation-informational)
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
+
+<!-- truthbox:begin -->
+> **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
+> **Claim:** in CI, the action re-derives every matched receipt through the pinned vendored verifier; a receipt that no longer re-derives — tampered, bypassed, or stale — turns the build red.
+> **Non-claim:** it does NOT re-prove the kernel — it inherits it from the pinned copy (see VENDORED.md) — and it trusts the receipt's producer (seal-host). A green build attests re-derivation of the receipts it was handed, not that the producing system is correct, nor that an unmediated effect left a receipt to check.
+<!-- truthbox:end -->
+> Map: canonical claims in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) · truth box in [docs/TRUTH-BOX.md](docs/TRUTH-BOX.md) · family: [seal](https://github.com/velvetmonkey/seal). Inheritance, not ownership — the verifier's home is [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit) (see [VENDORED.md](VENDORED.md)).
 
 These are the four explicit places where Seal's proofs stop. They are strengths because the boundaries are known and each is closed by a named, auditable mechanism outside the kernel.
 
