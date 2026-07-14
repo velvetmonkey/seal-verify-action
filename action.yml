@@ -3,7 +3,9 @@ name: seal-verify
 description: >-
   Authorise Seal decision receipts in CI: verifies the exact signed config,
   replays through the pinned audited kernel, and requires an independently
-  provisioned operator public-key pin. Green always means authorised.
+  provisioned operator public-key pin. Green means every receipt verified
+  against that pinned config and operator key — it authorises the receipts
+  checked, not the surrounding system.
 author: velvetmonkey
 
 branding:
