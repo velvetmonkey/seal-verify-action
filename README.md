@@ -4,7 +4,7 @@
 
 For every matched receipt the action verifies its exact Ed25519 `signed_config`, replays it through the pinned df42 kernel, and requires the signer to match `expected-config-pubkey`. Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
 
-## Luxury 10-second onboarding (copy-paste)
+## 10-second onboarding (copy-paste)
 
 ```bash
 bash scripts/showcase.sh
