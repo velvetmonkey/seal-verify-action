@@ -39,21 +39,26 @@ function harness() {
   return { env, stdout, outputs, summary };
 }
 
-test("pass fixtures all verify, exit 0", async () => {
+test("pass fixtures all verify with honest replay scope, exit 0", async () => {
   const h = harness();
   h.env.INPUT_RECEIPTS = "fixtures/pass/**/*.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 0);
-  assert.deepEqual(h.outputs(), { verified: "3", failed: "0", signature_valid: "true",
-    kernel_replay_consistent: "true", kernel_replay_scope: "3/3", authority_trusted: "true" });
+  // The §11.1 unparseable fixture sits in the pass set and the aggregate
+  // stays true: it is out of replay scope (3/4 applicable), not a replay
+  // failure. This is the honest clean-run headline.
+  assert.deepEqual(h.outputs(), { verified: "4", failed: "0", signature_valid: "true",
+    kernel_replay_consistent: "true", kernel_replay_scope: "3/4", authority_trusted: "true" });
   assert.match(h.stdout.buf, /::group::seal verify fixtures\/pass\/allow\.receipt\.json/);
+  assert.match(h.stdout.buf, /AUTHORISED \(raw-line identity only/);
   assert.doesNotMatch(h.stdout.buf, /::error/);
-  assert.match(h.summary(), /\*\*3 verified, 0 failed\.\*\*/);
+  assert.match(h.summary(), /\*\*4 verified, 0 failed\.\*\* Replay scope: 3\/4 applicable\./);
+  assert.match(h.summary(), /unparseable request — verified by raw line identity/);
 });
 
 test("VACUITY GUARD: all-unparseable set never reports kernel_replay_consistent true", async () => {
   const h = harness();
-  h.env.INPUT_RECEIPTS = "fixtures/unparseable/**/*.receipt.json";
+  h.env.INPUT_RECEIPTS = "fixtures/pass/unparseable.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 0);
   // [].every() is true: with zero replay-applicable receipts a naive
@@ -84,21 +89,10 @@ test("genuinely inconsistent replay still reports false with full scope", async 
   assert.match(h.summary(), /emitted decision bytes differ/);
 });
 
-test("mixed set reports true with honest scope", async () => {
-  const h = harness();
-  h.env.INPUT_RECEIPTS =
-    "fixtures/pass/**/*.receipt.json\nfixtures/unparseable/**/*.receipt.json";
-  const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
-  assert.equal(code, 0);
-  assert.deepEqual(h.outputs(), { verified: "4", failed: "0", signature_valid: "true",
-    kernel_replay_consistent: "true", kernel_replay_scope: "3/4", authority_trusted: "true" });
-  assert.match(h.summary(), /unparseable request — verified by raw line identity/);
-});
-
 test("unparseable fixture keeps proving the §11.1 rule at the verifier layer", async () => {
   const { verifyReceipt } = require("../vendor/seal-assurance-kit/src/verify.cjs");
   const receipt = JSON.parse(fs.readFileSync(
-    path.join(REPO, "fixtures/unparseable/unparseable.receipt.json"), "utf8"));
+    path.join(REPO, "fixtures/pass/unparseable.receipt.json"), "utf8"));
   const r = await verifyReceipt(receipt, { expectedConfigPubkey: TEST_PUBKEY });
   assert.equal(r.outcome, "authorised-unparseable");
   assert.equal(r.unparseableRequest, true);
@@ -138,8 +132,8 @@ test("missing authority pin reports authentic-but-unpinned and exits 3", async (
   h.env.INPUT_RECEIPTS = "fixtures/pass/**/*.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 3);
-  assert.deepEqual(h.outputs(), { verified: "0", failed: "3", signature_valid: "true",
-    kernel_replay_consistent: "true", kernel_replay_scope: "3/3", authority_trusted: "unpinned" });
+  assert.deepEqual(h.outputs(), { verified: "0", failed: "4", signature_valid: "true",
+    kernel_replay_consistent: "true", kernel_replay_scope: "3/4", authority_trusted: "unpinned" });
   assert.match(h.stdout.buf, /::error file=/);
 });
 
@@ -149,8 +143,8 @@ test("working-directory + newline multi-pattern", async () => {
   h.env.INPUT_RECEIPTS = "pass/**/*.receipt.json\nfail/bypass.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 1);
-  assert.deepEqual(h.outputs(), { verified: "3", failed: "1", signature_valid: "false",
-    kernel_replay_consistent: "false", kernel_replay_scope: "4/4", authority_trusted: "false" });
+  assert.deepEqual(h.outputs(), { verified: "4", failed: "1", signature_valid: "false",
+    kernel_replay_consistent: "false", kernel_replay_scope: "4/5", authority_trusted: "false" });
   assert.match(h.stdout.buf, /::group::seal verify pass\/allow\.receipt\.json/);
 });
 
