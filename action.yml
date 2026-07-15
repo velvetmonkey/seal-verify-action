@@ -2,10 +2,10 @@
 name: seal-verify
 description: >-
   Authorise Seal decision receipts in CI: verifies the exact signed config,
-  replays through the pinned audited kernel, and requires an independently
-  provisioned operator public-key pin. Green means every receipt verified
-  against that pinned config and operator key — it authorises the receipts
-  checked, not the surrounding system.
+  replays every replay-applicable receipt through the pinned audited kernel,
+  and requires an independently provisioned operator public-key pin. Green
+  means every receipt verified against that pinned config and operator key —
+  it authorises the receipts checked, not the surrounding system.
 author: velvetmonkey
 
 branding:
@@ -46,7 +46,19 @@ outputs:
   signature_valid:
     description: True only when every matched receipt has a valid Ed25519 signed_config.
   kernel_replay_consistent:
-    description: True only when every matched receipt replays byte-identically through df42.
+    description: >-
+      True only when at least one matched receipt is replay-applicable AND
+      every replay-applicable receipt replays byte-identically through df42.
+      Unparseable-request receipts (schema §11.1) carry no (tool, arguments),
+      are out of replay scope rather than replay failures, and verify at
+      raw-line-identity scope instead. Read this together with
+      kernel_replay_scope: a set with nothing replayable reports false, never
+      a vacuous true.
+  kernel_replay_scope:
+    description: >-
+      Replay coverage as "applicable/matched" (e.g. "3/4"): how many of the
+      matched receipts kernel_replay_consistent actually replayed. "0/N" means
+      nothing was replayable.
   authority_trusted:
     description: True only when every signer matches expected-config-pubkey; otherwise false or unpinned.
 

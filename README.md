@@ -1,8 +1,8 @@
 # seal-verify-action
 
-**Add this to CI. Green means the signed config is authentic, replay-consistent, and authorised by your independently provisioned operator-key pin.**
+**Add this to CI. Green means the signed config is authentic, replay-consistent where replay applies, and authorised by your independently provisioned operator-key pin.**
 
-For every matched receipt the action verifies its exact Ed25519 `signed_config`, replays it through the pinned df42 kernel, and requires the signer to match `expected-config-pubkey`. Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
+For every matched receipt the action verifies its exact Ed25519 `signed_config` and requires the signer to match `expected-config-pubkey`; every replay-applicable receipt is replayed through the pinned df42 kernel (§11.1 unparseable-request receipts verify by raw line identity instead, and the coverage is reported as `kernel_replay_scope`). Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
 
 ## 10-second onboarding (copy-paste)
 
@@ -41,7 +41,7 @@ Bad receipt = red build. Visible in terminal.
 
 <!-- truthbox:begin -->
 > **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
-> **Claim:** in CI, green means every matched receipt has a valid signed config, replayed byte-identically through df42, and its signer matched the independently configured operator pin.
+> **Claim:** in CI, green means every matched receipt has a valid signed config, its signer matched the independently configured operator pin, and every replay-applicable receipt replayed byte-identically through df42 — unparseable-request receipts (§11.1) verify at raw-line-identity scope instead, with replay coverage disclosed as `kernel_replay_scope`.
 > **Non-claim:** it does NOT re-prove the kernel or establish that the pinned operator chose a good policy. It cannot say anything about an effect that produced no receipt.
 <!-- truthbox:end -->
 > Map: canonical claims in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) · truth box in [docs/TRUTH-BOX.md](docs/TRUTH-BOX.md) · family: [seal](https://github.com/velvetmonkey/seal). Inheritance, not ownership — the verifier's home is [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit) (see [VENDORED.md](VENDORED.md)).
@@ -93,7 +93,8 @@ checks in [What this checks — and what it does not](#what-this-checks--and-wha
 | `verified` | Count of receipts that are fully authorised. |
 | `failed` | Count that failed: NOT VERIFIED, NOT MEDIATED (bypass receipt), verifier error, or a listed file that does not exist. |
 | `signature_valid` | `true` only when every matched receipt has a valid Ed25519 config signature. |
-| `kernel_replay_consistent` | `true` only when every matched receipt replays byte-identically. |
+| `kernel_replay_consistent` | `true` only when at least one matched receipt is replay-applicable AND every replay-applicable receipt replays byte-identically. §11.1 unparseable-request receipts are out of replay scope, not replay failures; a set with nothing replayable reports `false`, never a vacuous `true`. Read alongside `kernel_replay_scope`. |
+| `kernel_replay_scope` | Replay coverage as `applicable/matched` (e.g. `3/4`): how many matched receipts the replay claim actually covered. |
 | `authority_trusted` | `true` only when every signer matches the operator pin; otherwise `false` or `unpinned`. |
 
 ## Behaviour
@@ -154,7 +155,7 @@ specific to being a CI wrapper. Canonical copy: [docs/LIMITATIONS.md](docs/LIMIT
 - Seal does NOT make the AI smarter or prevent hallucinations; it stops an unapproved effect.
 - Axiom footprint {propext, Classical.choice, Quot.sound} is the minimal classical fragment; no extra axioms.
 - seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned copy of `seal verify` (see VENDORED.md) and inherits exactly that verifier's guarantees and limits — no more.
-- A green build attests that matched receipts authenticated, replayed consistently, and matched the configured authority; it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
+- A green build attests that matched receipts authenticated, matched the configured authority, and that every replay-applicable receipt replayed consistently (unparseable-request receipts verify at raw-line-identity scope; coverage is disclosed as `kernel_replay_scope`); it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
 - The action adds no theorem about itself; its trust rests on the pinned verifier bytes and the independently provisioned operator public key, not on receipt-supplied authority claims.
 <!-- claims:end -->
 
