@@ -9,7 +9,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
-const { run } = require("../lib/main.js");
+const { run, aggregateVerdicts } = require("../lib/main.js");
 
 const REPO = path.resolve(__dirname, "..");
 const TEST_PUBKEY = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
@@ -54,6 +54,35 @@ test("pass fixtures all verify with honest replay scope, exit 0", async () => {
   assert.doesNotMatch(h.stdout.buf, /::error/);
   assert.match(h.summary(), /\*\*4 verified, 0 failed\.\*\* Replay scope: 3\/4 applicable\./);
   assert.match(h.summary(), /unparseable request — kernel-attested request binding/);
+});
+
+test("VACUITY GUARD (direct): aggregateVerdicts over an EMPTY set claims nothing", () => {
+  // [].every() is true. Without the `length > 0` prefix on each aggregate, a
+  // zero-receipt set would report signature_valid / kernel_replay_consistent /
+  // authority_trusted all true — "everything verified" over nothing verified.
+  // This pins ALL THREE length guards at once (lib/main.js aggregateVerdicts);
+  // drop any one and this goes RED. The e2e path fails closed on zero matches
+  // upstream, so this direct unit test is the only place the guards are reachable.
+  const out = aggregateVerdicts([]);
+  assert.equal(out.signatureValid, false, "signature_valid must not be vacuously true over []");
+  assert.equal(out.replayConsistent, false, "kernel_replay_consistent must not be vacuously true over []");
+  assert.equal(out.authorityTrusted, false, "authority_trusted must not be vacuously true over []");
+  assert.equal(out.replayScope, "0/0");
+});
+
+test("VACUITY GUARD (direct): all-unparseable (replay-inapplicable) set is replay-vacuous, not consistent", () => {
+  // A non-empty set where every receipt is OUT of replay scope: signature and
+  // authority still aggregate over the real receipts (true), but replay has
+  // nothing applicable and must NOT claim consistency.
+  const unparseable = [
+    { signature_valid: true, authority_trusted: true, replay_applicable: false },
+    { signature_valid: true, authority_trusted: true, replay_applicable: false },
+  ];
+  const out = aggregateVerdicts(unparseable);
+  assert.equal(out.signatureValid, true);
+  assert.equal(out.authorityTrusted, true);
+  assert.equal(out.replayConsistent, false, "zero replay-applicable => never consistent");
+  assert.equal(out.replayScope, "0/2");
 });
 
 test("VACUITY GUARD: all-unparseable set never reports kernel_replay_consistent true", async () => {
