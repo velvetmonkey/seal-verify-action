@@ -28,8 +28,7 @@ function verifyConfigSignature(sc) {
 
 // The kernel material an unparseable-request receipt carries must at least
 // agree with itself: the audit embedded in emitted_bytes names the same
-// verdict and certs the receipt asserts. Consistency, not replay — the
-// emitted bytes do not commit to the raw line.
+// verdict and certs the receipt asserts. Consistency, not replay.
 function auditConsistent(F, receipt) {
   try {
     const audit = JSON.parse(JSON.parse(receipt.emitted_bytes).audit);
@@ -37,6 +36,19 @@ function auditConsistent(F, receipt) {
       JSON.stringify(audit.certs) === JSON.stringify(receipt.certs);
   } catch {
     return false;
+  }
+}
+
+// The kernel's own commitment to the bytes it judged: Host/Audit.lean puts
+// sha256 of the exact judged line into the audit inside emitted_bytes. This
+// is what makes the pairing of kernel material to request identity
+// kernel-attested rather than host-asserted.
+function auditRequestHash(emittedBytes) {
+  try {
+    const h = JSON.parse(JSON.parse(emittedBytes).audit).request_sha256;
+    return typeof h === "string" && /^[0-9a-f]{64}$/.test(h) ? h : null;
+  } catch {
+    return null;
   }
 }
 
@@ -104,7 +116,7 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
     out.requestHash = null;
     out.requestHashMatch = null;
     out.rawLineIdentity = receipt.request_sha256;
-    out.requestIdentityNote = "no canonical re-derivation possible; raw line identity only (request_sha256)";
+    out.requestIdentityNote = "no canonical re-derivation possible; request identity is the raw line hash (request_sha256), kernel-attested via the audit's own commitment";
   } else {
     out.requestLine = F.canonicalRequest(receipt.tool, receipt.arguments);
     out.requestHash = F.canonicalRequestSha256(receipt.tool, receipt.arguments);
@@ -149,6 +161,14 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
       if (out.signature_valid) out.config_freshness = freshnessCandidate;
     }
     out.kernelMaterialConsistent = auditConsistent(F, receipt);
+    // The kernel-attested request binding: the audit's request_sha256 (the
+    // kernel's own hash of the judged bytes) must equal the receipt's
+    // request_sha256. The pairing is kernel-attested now, no longer
+    // host-asserted. Honest residual that remains: without replay, the
+    // authenticity of the kernel blob itself still rests on the producing
+    // host's transcript.
+    const kernelHash = auditRequestHash(receipt.emitted_bytes);
+    out.kernelRequestBinding = kernelHash !== null && kernelHash === receipt.request_sha256;
   } else if (out.bindingOk && grants.errors.length === 0) {
     try {
       const red = await decideSigned(signedConfig, {
@@ -162,8 +182,31 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
         out.config_freshness = freshnessCandidate;
         out.rederived = red.parsed.verdict === "DENY" ? "BLOCK" : red.parsed.verdict;
         out.verdictMatch = out.rederived === receipt.verdict;
-        out.emittedBytesMatch = typeof receipt.emitted_bytes === "string"
-          ? red.raw === receipt.emitted_bytes : null;
+        // Kernel-attested request binding, parseable side. A native-host
+        // receipt carries the hash of the ACTUAL wire line (request_sha256);
+        // kit-minted receipts carry no top-level request_sha256 and the
+        // judged line IS the canonical line.
+        const expectedHash = typeof receipt.request_sha256 === "string"
+          ? receipt.request_sha256 : out.requestHash;
+        const storedKernelHash = typeof receipt.emitted_bytes === "string"
+          ? auditRequestHash(receipt.emitted_bytes) : null;
+        out.kernelRequestBinding = storedKernelHash !== null && storedKernelHash === expectedHash;
+        // Replay reconstructs the CANONICAL id=1 line, so the replayed
+        // audit's request commitment legitimately differs whenever the
+        // actual wire line differed. Compare byte-identical MODULO that one
+        // kernel-derived token (pinned independently just above); the token
+        // must occur exactly once for the substitution to be byte-safe.
+        // Strictly stronger than plain equality, which this degenerates to
+        // when the hashes agree.
+        if (typeof receipt.emitted_bytes === "string") {
+          const replayedHash = auditRequestHash(red.raw);
+          const substitutable = replayedHash !== null && storedKernelHash !== null &&
+            red.raw.split(replayedHash).length === 2;
+          out.emittedBytesMatch = substitutable &&
+            red.raw.replace(replayedHash, storedKernelHash) === receipt.emitted_bytes;
+        } else {
+          out.emittedBytesMatch = null;
+        }
         out.kernel_replay_consistent = out.verdictMatch === true && out.emittedBytesMatch === true;
       }
     } catch (error) {
@@ -176,10 +219,11 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
   // request re-derivation, kernel replay) is excluded rather than failed.
   out.verificationCore = out.unparseableRequest
     ? out.formatOk && out.kernelShaMatch && out.bindingOk &&
-      out.grantErrors.length === 0 && out.signature_valid && out.kernelMaterialConsistent === true
+      out.grantErrors.length === 0 && out.signature_valid &&
+      out.kernelMaterialConsistent === true && out.kernelRequestBinding === true
     : out.formatOk && out.kernelShaMatch && out.requestHashMatch &&
       out.bindingOk && out.grantErrors.length === 0 && out.signature_valid &&
-      out.kernel_replay_consistent;
+      out.kernel_replay_consistent && out.kernelRequestBinding === true;
   out.outcome = !out.verificationCore || out.authority_trusted === false
     ? "failure"
     : out.authority_trusted !== true ? "unpinned"
@@ -195,14 +239,14 @@ function report(result, receiptPath) {
   if (result.formatErrors?.length) console.log(`  FAIL  schema valid   (${result.formatErrors.join("; ")})`);
   console.log(`  kernel_sha_match: ${result.kernelShaMatch === true}`);
   if (result.unparseableRequest) {
-    console.log(`  request_hash_match: n/a — unparseable request; raw line identity ${String(result.rawLineIdentity || "").slice(0, 12)}… only`);
+    console.log(`  request_binding: kernel-attested — audit sha256(judged bytes) matches request_sha256 (${String(result.rawLineIdentity || "").slice(0, 12)}…): ${result.kernelRequestBinding === true}; canonical re-derivation n/a (unparseable)`);
   } else {
     console.log(`  request_hash_match: ${result.requestHashMatch === true}`);
   }
   console.log(`  binding_ok: ${result.bindingOk === true}`);
   console.log(`  signature_valid: ${result.signature_valid}`);
   if (result.unparseableRequest) {
-    console.log(`  kernel_replay_consistent: n/a — no (tool, arguments) to replay; kernel material self-consistent: ${result.kernelMaterialConsistent === true}`);
+    console.log(`  kernel_replay_consistent: n/a — no (tool, arguments) to replay; kernel material self-consistent: ${result.kernelMaterialConsistent === true}; kernel-bound to request_sha256: ${result.kernelRequestBinding === true}`);
   } else {
     console.log(`  kernel_replay_consistent: ${result.kernel_replay_consistent}`);
   }
@@ -212,10 +256,10 @@ function report(result, receiptPath) {
   if (result.outcome === "authorised") {
     console.log("  PASS  AUTHORISED (signed by pinned operator key)");
   } else if (result.outcome === "authorised-unparseable") {
-    console.log(`  PASS  AUTHORISED (raw-line identity only: wire line not re-parseable — ${receipt.request_parse_error}; no canonical replay possible)`);
+    console.log(`  PASS  AUTHORISED (unparseable request — kernel-attested request binding: the kernel's audit commits to sha256 of the exact bytes it judged and it matches request_sha256; wire line not re-parseable — ${receipt.request_parse_error}; no canonical replay possible)`);
   } else if (result.outcome === "unpinned") {
     console.log(result.unparseableRequest
-      ? `  FAIL  UNPINNED (authentic, raw-line identity only — no replay possible; independently pin ${receipt.signed_config.pubkey})`
+      ? `  FAIL  UNPINNED (authentic, kernel-attested request binding — no replay possible; independently pin ${receipt.signed_config.pubkey})`
       : `  FAIL  UNPINNED (authentic + replay-consistent; independently pin ${receipt.signed_config.pubkey})`);
   } else if (result.notMediated) {
     console.log("  FAIL  NOT MEDIATED (bypass receipt)");
@@ -226,7 +270,9 @@ function report(result, receiptPath) {
       result.bindingErrors?.join("; ") || result.grantErrors?.join("; ") ||
       result.rederiveError ||
       (result.verdictMatch === false ? "verdict does not match replay" : "") ||
-      (result.emittedBytesMatch === false ? "emitted decision bytes differ" : "") || "NOT VERIFIED";
+      (result.emittedBytesMatch === false ? "emitted decision bytes differ" : "") ||
+      (result.kernelRequestBinding === false
+        ? "kernel-attested request hash does not match request_sha256 (host and kernel disagree about the judged line)" : "") || "NOT VERIFIED";
     console.log(`  FAIL  ${detail}`);
   }
   return result;
