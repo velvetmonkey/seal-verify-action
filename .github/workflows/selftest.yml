@@ -18,7 +18,7 @@ jobs:
           expected-config-pubkey: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
       - name: assert pass outputs
         run: |
-          test "${{ steps.pass.outputs.verified }}" = "3"
+          test "${{ steps.pass.outputs.verified }}" = "4"
           test "${{ steps.pass.outputs.failed }}" = "0"
 
       - name: bypass receipt must fail the step

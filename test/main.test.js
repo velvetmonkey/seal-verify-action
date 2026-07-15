@@ -44,11 +44,17 @@ test("pass fixtures all verify, exit 0", async () => {
   h.env.INPUT_RECEIPTS = "fixtures/pass/**/*.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 0);
-  assert.deepEqual(h.outputs(), { verified: "3", failed: "0", signature_valid: "true",
-    kernel_replay_consistent: "true", authority_trusted: "true" });
+  // kernel_replay_consistent aggregates over EVERY receipt; the §11.1
+  // unparseable fixture cannot be replayed (no tool/arguments), so the
+  // aggregate is honestly false while the receipt still verifies at its
+  // reduced raw-line-identity scope.
+  assert.deepEqual(h.outputs(), { verified: "4", failed: "0", signature_valid: "true",
+    kernel_replay_consistent: "false", authority_trusted: "true" });
   assert.match(h.stdout.buf, /::group::seal verify fixtures\/pass\/allow\.receipt\.json/);
+  assert.match(h.stdout.buf, /AUTHORISED \(raw-line identity only/);
   assert.doesNotMatch(h.stdout.buf, /::error/);
-  assert.match(h.summary(), /\*\*3 verified, 0 failed\.\*\*/);
+  assert.match(h.summary(), /\*\*4 verified, 0 failed\.\*\*/);
+  assert.match(h.summary(), /unparseable request — verified by raw line identity/);
 });
 
 test("bypass receipt fails with annotation, exit 1", async () => {
@@ -82,8 +88,8 @@ test("missing authority pin reports authentic-but-unpinned and exits 3", async (
   h.env.INPUT_RECEIPTS = "fixtures/pass/**/*.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 3);
-  assert.deepEqual(h.outputs(), { verified: "0", failed: "3", signature_valid: "true",
-    kernel_replay_consistent: "true", authority_trusted: "unpinned" });
+  assert.deepEqual(h.outputs(), { verified: "0", failed: "4", signature_valid: "true",
+    kernel_replay_consistent: "false", authority_trusted: "unpinned" });
   assert.match(h.stdout.buf, /::error file=/);
 });
 
@@ -93,7 +99,7 @@ test("working-directory + newline multi-pattern", async () => {
   h.env.INPUT_RECEIPTS = "pass/**/*.receipt.json\nfail/bypass.receipt.json";
   const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
   assert.equal(code, 1);
-  assert.deepEqual(h.outputs(), { verified: "3", failed: "1", signature_valid: "false",
+  assert.deepEqual(h.outputs(), { verified: "4", failed: "1", signature_valid: "false",
     kernel_replay_consistent: "false", authority_trusted: "false" });
   assert.match(h.stdout.buf, /::group::seal verify pass\/allow\.receipt\.json/);
 });
