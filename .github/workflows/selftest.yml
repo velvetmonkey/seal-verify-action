@@ -36,6 +36,19 @@ jobs:
           test "${{ steps.unparseable.outputs.kernel_replay_consistent }}" = "false"
           test "${{ steps.unparseable.outputs.kernel_replay_scope }}" = "0/1"
 
+      - name: forged request pairing must fail the step (kernel-attested binding)
+        id: forged
+        uses: ./
+        continue-on-error: true
+        with:
+          receipts: fixtures/fail/forged-binding.receipt.json
+          expected-config-pubkey: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
+      - name: assert forged pairing failed
+        run: |
+          test "${{ steps.forged.outcome }}" = "failure"
+          test "${{ steps.forged.outputs.verified }}" = "0"
+          test "${{ steps.forged.outputs.failed }}" = "1"
+
       - name: bypass receipt must fail the step
         id: bypass
         uses: ./

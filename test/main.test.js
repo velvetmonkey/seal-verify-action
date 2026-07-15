@@ -50,10 +50,10 @@ test("pass fixtures all verify with honest replay scope, exit 0", async () => {
   assert.deepEqual(h.outputs(), { verified: "4", failed: "0", signature_valid: "true",
     kernel_replay_consistent: "true", kernel_replay_scope: "3/4", authority_trusted: "true" });
   assert.match(h.stdout.buf, /::group::seal verify fixtures\/pass\/allow\.receipt\.json/);
-  assert.match(h.stdout.buf, /AUTHORISED \(raw-line identity only/);
+  assert.match(h.stdout.buf, /AUTHORISED \(unparseable request — kernel-attested request binding/);
   assert.doesNotMatch(h.stdout.buf, /::error/);
   assert.match(h.summary(), /\*\*4 verified, 0 failed\.\*\* Replay scope: 3\/4 applicable\./);
-  assert.match(h.summary(), /unparseable request — verified by raw line identity/);
+  assert.match(h.summary(), /unparseable request — kernel-attested request binding/);
 });
 
 test("VACUITY GUARD: all-unparseable set never reports kernel_replay_consistent true", async () => {
@@ -69,9 +69,9 @@ test("VACUITY GUARD: all-unparseable set never reports kernel_replay_consistent 
   assert.notEqual(out.kernel_replay_consistent, "true");
   assert.deepEqual(out, { verified: "1", failed: "0", signature_valid: "true",
     kernel_replay_consistent: "false", kernel_replay_scope: "0/1", authority_trusted: "true" });
-  assert.match(h.stdout.buf, /AUTHORISED \(raw-line identity only/);
+  assert.match(h.stdout.buf, /AUTHORISED \(unparseable request — kernel-attested request binding/);
   assert.doesNotMatch(h.stdout.buf, /::error/);
-  assert.match(h.summary(), /unparseable request — verified by raw line identity/);
+  assert.match(h.summary(), /unparseable request — kernel-attested request binding/);
 });
 
 test("genuinely inconsistent replay still reports false with full scope", async () => {
@@ -99,6 +99,27 @@ test("unparseable fixture keeps proving the §11.1 rule at the verifier layer", 
   // Not a match, not a mismatch — its own state.
   assert.equal(r.requestHashMatch, null);
   assert.equal(r.kernelMaterialConsistent, true);
+  // The binding is kernel-attested now: the audit's own sha256 of the judged
+  // bytes matches the receipt's request_sha256.
+  assert.equal(r.kernelRequestBinding, true);
+});
+
+test("RED: forged request pairing on an unparseable receipt fails closed", async () => {
+  // Kernel material from the real judged line presented with a DIFFERENT
+  // request_sha256. Before the kernel committed to the judged bytes this
+  // forgery VERIFIED — nothing tied request_sha256 to the kernel material.
+  const { verifyReceipt } = require("../vendor/seal-assurance-kit/src/verify.cjs");
+  const receipt = JSON.parse(fs.readFileSync(
+    path.join(REPO, "fixtures/fail/forged-binding.receipt.json"), "utf8"));
+  const r = await verifyReceipt(receipt, { expectedConfigPubkey: TEST_PUBKEY });
+  assert.equal(r.kernelRequestBinding, false);
+  assert.equal(r.outcome, "failure");
+
+  const h = harness();
+  h.env.INPUT_RECEIPTS = "fixtures/fail/forged-binding.receipt.json";
+  const code = await run({ env: h.env, cwd: REPO, stdout: h.stdout });
+  assert.equal(code, 1);
+  assert.match(h.summary(), /kernel-attested request hash does not match request_sha256/);
 });
 
 test("bypass receipt fails with annotation, exit 1", async () => {

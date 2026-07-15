@@ -10,9 +10,9 @@ run is hermetic (no network, no npm install, no version drift at run time).
 |---|---|
 | upstream | `velvetmonkey/seal-assurance-kit` |
 | version | `0.0.1` |
-| assurance-kit base | `0db03efd27fc3775988d5e4bd527d8e6206b6c47` |
+| assurance-kit base | `b76027c9c8bb5c838e7fc571085a8127d4b33dc8` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
-| kernel wasm | `df42cbada2297741bfeab99f222b96ac02e43a4ce8695b24922b425b8d66b1e8` |
+| kernel wasm | `d3067bc07e74977dedf6bb96d79a710c4b61143f6e8db151655bc88ece8b9d66` |
 
 The same pin is hard-coded in `lib/pin.js` and echoed in every step summary.
 Update both together.
@@ -24,14 +24,14 @@ against the working tree on every run (`sha256sum -c`), so a stale or edited
 vendored file fails the build.
 
 ```
-ccd49e0715d814429047213ccd0047da163e7d7035eece54e1c1e2123f6af9bf  src/verify.cjs
+f0865d4360229c0ccd6eefbe683fba97fe274696d5c2058f724eae5d5ad51c1d  src/verify.cjs
 e8a0148e3803cbf68bfd46a0fc272945deb970f5c3e85ac55bee6f6666efb67b  kernel/runner.cjs
 fe702d0b4d971a4fe16d649d2016b1e14cda6672d92d0a0a190656809279b2d2  kernel/receipt-format.js
-d93c26b75adf40c9d60a10079fe92f666777fe69729b006abe7aba60685fb8e8  kernel/kernel.js
+97a8aee1660584ff3cd0f169a2db823bb3685d8ed0b35503bd726daef3946a01  kernel/kernel.js
 9ef462c22ad85e539d2170a4d43965d45a35def8878246649bbc6534f1607929  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
-2ba21824248a66751d31a2f778e21b866805dc7ca517ae84af4ab1bc597cb14f  kernel/wasm/seal.js
-df42cbada2297741bfeab99f222b96ac02e43a4ce8695b24922b425b8d66b1e8  kernel/wasm/seal.wasm
+5a017fa4a71db7c214323c1dd1db415a96ec0afececf84f74ac1f4fc95dd972e  kernel/wasm/seal.js
+d3067bc07e74977dedf6bb96d79a710c4b61143f6e8db151655bc88ece8b9d66  kernel/wasm/seal.wasm
 ```
 
 These eight files are the complete dependency closure of `seal verify`

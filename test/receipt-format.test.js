@@ -79,7 +79,9 @@ test("verifyReceipt reports the distinct reduced-scope state, never a false matc
     request_parse_error: "cannot parse mediated request for receipt: number out of range at line 1 column 145",
     bypass: false, verdict: "BLOCK", reason: "safety kernel: cert", deny_kernel: "safety",
     certs,
-    emitted_bytes: JSON.stringify({ audit: JSON.stringify({ certs, epoch: 1, verdict: "deny" }), route: "block" }),
+    // The audit carries the kernel's request commitment (Host/Audit.lean
+    // request_sha256) — the kernel-attested binding the verifier now checks.
+    emitted_bytes: JSON.stringify({ audit: JSON.stringify({ certs, epoch: 1, request_sha256: "c".repeat(64), verdict: "deny" }), route: "block" }),
     kernel_identity: { wasm_sha256: kernelSha(), self_verified: true },
     signed_config: signedConfig, kernel_config: JSON.parse(payload), granted_capabilities: [],
   });

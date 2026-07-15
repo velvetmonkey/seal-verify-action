@@ -40,7 +40,7 @@ test("markdown carries pin, patterns, one row per result, counts", () => {
 test("replay column renders n/a when replay does not apply, never false", () => {
   const md = toMarkdown(
     [
-      { relPath: "u.receipt.json", status: "verified", detail: "unparseable request — verified by raw line identity; no canonical replay possible", signature_valid: true, kernel_replay_consistent: false, replay_applicable: false, authority_trusted: true },
+      { relPath: "u.receipt.json", status: "verified", detail: "unparseable request — kernel-attested request binding (audit sha256 = request_sha256); no canonical replay possible", signature_valid: true, kernel_replay_consistent: false, replay_applicable: false, authority_trusted: true },
       { relPath: "a.receipt.json", status: "verified", detail: "", signature_valid: true, kernel_replay_consistent: true, replay_applicable: true, authority_trusted: true },
     ],
     { pin, verifierVersion: "", patterns: ["**/*.receipt.json"], workingDirectory: "." }
