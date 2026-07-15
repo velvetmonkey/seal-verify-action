@@ -37,6 +37,19 @@ test("markdown carries pin, patterns, one row per result, counts", () => {
   assert.equal(rows.length, RESULTS.length);
 });
 
+test("replay column renders n/a when replay does not apply, never false", () => {
+  const md = toMarkdown(
+    [
+      { relPath: "u.receipt.json", status: "verified", detail: "unparseable request — verified by raw line identity; no canonical replay possible", signature_valid: true, kernel_replay_consistent: false, replay_applicable: false, authority_trusted: true },
+      { relPath: "a.receipt.json", status: "verified", detail: "", signature_valid: true, kernel_replay_consistent: true, replay_applicable: true, authority_trusted: true },
+    ],
+    { pin, verifierVersion: "", patterns: ["**/*.receipt.json"], workingDirectory: "." }
+  );
+  assert.match(md, /\| `u\.receipt\.json` \| ✅ AUTHORISED \| true \| n\/a \|/);
+  assert.match(md, /\| `a\.receipt\.json` \| ✅ AUTHORISED \| true \| true \|/);
+  assert.match(md, /Replay scope: 1\/2 applicable\./);
+});
+
 test("markdown escapes pipes and newlines in details", () => {
   const md = toMarkdown(
     [{ relPath: "x.json", status: "not-verified", detail: "a|b\nc" }],

@@ -10,6 +10,6 @@
 
 <!-- truthbox:begin -->
 > **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
-> **Claim:** in CI, green means every matched receipt has a valid signed config, replayed byte-identically through df42, and its signer matched the independently configured operator pin.
+> **Claim:** in CI, green means every matched receipt has a valid signed config, its signer matched the independently configured operator pin, and every replay-applicable receipt replayed byte-identically through df42 — unparseable-request receipts (§11.1) verify at raw-line-identity scope instead, with replay coverage disclosed as `kernel_replay_scope`.
 > **Non-claim:** it does NOT re-prove the kernel or establish that the pinned operator chose a good policy. It cannot say anything about an effect that produced no receipt.
 <!-- truthbox:end -->

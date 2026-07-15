@@ -20,6 +20,6 @@ that are specific to being a CI wrapper.
 - Seal does NOT make the AI smarter or prevent hallucinations; it stops an unapproved effect.
 - Axiom footprint {propext, Classical.choice, Quot.sound} is the minimal classical fragment; no extra axioms.
 - seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned copy of `seal verify` (see VENDORED.md) and inherits exactly that verifier's guarantees and limits — no more.
-- A green build attests that matched receipts authenticated, replayed consistently, and matched the configured authority; it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
+- A green build attests that matched receipts authenticated, matched the configured authority, and that every replay-applicable receipt replayed consistently (unparseable-request receipts verify at raw-line-identity scope; coverage is disclosed as `kernel_replay_scope`); it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
 - The action adds no theorem about itself; its trust rests on the pinned verifier bytes and the independently provisioned operator public key, not on receipt-supplied authority claims.
 <!-- claims:end -->

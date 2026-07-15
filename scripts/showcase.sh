@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: Apache-2.0
-# Luxury onboarding showcase: run the SAME vendored verifier the action runs,
+# Onboarding showcase: run the SAME vendored verifier the action runs,
 # over the bundled fixtures, so you see the real PASS / FAIL before wiring CI.
 set -euo pipefail
 cd "$(dirname "$0")/.."
