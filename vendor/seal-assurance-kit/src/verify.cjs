@@ -3,8 +3,42 @@
 // The verifier consumes the receipt's exact signed_config bytes and requires
 // an independently provisioned public-key pin for an authorised outcome.
 const { decideSigned, kernelSha, pinnedSha } = require("../kernel/runner.cjs");
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+
+// §11.1 helpers for unparseable-request receipts -----------------------------
+
+// Ed25519 over the exact signed_config payload bytes — the same check
+// seal_init performs, done directly because the kernel cannot be invoked
+// without a parseable call.
+function verifyConfigSignature(sc) {
+  try {
+    if (!sc || typeof sc.pubkey !== "string" || typeof sc.signature !== "string" ||
+        typeof sc.payload !== "string") return false;
+    const key = crypto.createPublicKey({
+      key: Buffer.concat([Buffer.from("302a300506032b6570032100", "hex"), Buffer.from(sc.pubkey, "hex")]),
+      format: "der", type: "spki",
+    });
+    return crypto.verify(null, Buffer.from(sc.payload, "utf8"), key, Buffer.from(sc.signature, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+// The kernel material an unparseable-request receipt carries must at least
+// agree with itself: the audit embedded in emitted_bytes names the same
+// verdict and certs the receipt asserts. Consistency, not replay — the
+// emitted bytes do not commit to the raw line.
+function auditConsistent(F, receipt) {
+  try {
+    const audit = JSON.parse(JSON.parse(receipt.emitted_bytes).audit);
+    return F.HOST_AUDIT_VERDICT_MAP[audit.verdict] === receipt.verdict &&
+      JSON.stringify(audit.certs) === JSON.stringify(receipt.certs);
+  } catch {
+    return false;
+  }
+}
 
 function blankResult(receipt = null) {
   return {
@@ -37,6 +71,14 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
   }
   out.mediated = true;
 
+  // §11.1 unparseable-request receipt: the kernel judged a wire line the
+  // producer could not re-parse (seal-host main @ 3a74dbf). request_sha256
+  // (SHA-256 of the raw line) is the only request commitment; canonical
+  // re-derivation and kernel replay both need the (tool, arguments) the
+  // receipt honestly does not carry. Everything else is still verified and
+  // the outcome is its own reduced-scope state — never a bare PASS.
+  out.unparseableRequest = typeof receipt.request_parse_error === "string";
+
   const signedConfig = receipt.signed_config;
   const pinSupplied = expectedConfigPubkey !== undefined;
   if (pinSupplied && (typeof expectedConfigPubkey !== "string" || !/^[0-9a-f]{64}$/.test(expectedConfigPubkey))) {
@@ -55,9 +97,19 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
   out.kernelSha = local;
   out.kernelShaMatch = local === pinned && receipt.kernel_identity.wasm_sha256 === local;
 
-  out.requestLine = F.canonicalRequest(receipt.tool, receipt.arguments);
-  out.requestHash = F.canonicalRequestSha256(receipt.tool, receipt.arguments);
-  out.requestHashMatch = out.requestHash === receipt.canonical_request_sha256;
+  if (out.unparseableRequest) {
+    // Not a match, not a mismatch — its own state (undefined === undefined is
+    // not verification).
+    out.requestLine = null;
+    out.requestHash = null;
+    out.requestHashMatch = null;
+    out.rawLineIdentity = receipt.request_sha256;
+    out.requestIdentityNote = "no canonical re-derivation possible; raw line identity only (request_sha256)";
+  } else {
+    out.requestLine = F.canonicalRequest(receipt.tool, receipt.arguments);
+    out.requestHash = F.canonicalRequestSha256(receipt.tool, receipt.arguments);
+    out.requestHashMatch = out.requestHash === receipt.canonical_request_sha256;
+  }
 
   let signedPayload = null;
   let freshnessCandidate = null;
@@ -90,7 +142,14 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
   out.rederived = null;
   out.verdictMatch = null;
   out.emittedBytesMatch = null;
-  if (out.bindingOk && grants.errors.length === 0) {
+  if (out.unparseableRequest) {
+    out.replayUnavailable = "unparseable-request receipt — no (tool, arguments) to replay";
+    if (out.bindingOk && grants.errors.length === 0) {
+      out.signature_valid = verifyConfigSignature(signedConfig);
+      if (out.signature_valid) out.config_freshness = freshnessCandidate;
+    }
+    out.kernelMaterialConsistent = auditConsistent(F, receipt);
+  } else if (out.bindingOk && grants.errors.length === 0) {
     try {
       const red = await decideSigned(signedConfig, {
         tool: receipt.tool, args: receipt.arguments, approvals: grants.approvals,
@@ -112,12 +171,19 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
     }
   }
 
-  out.verificationCore = out.formatOk && out.kernelShaMatch && out.requestHashMatch &&
-    out.bindingOk && out.grantErrors.length === 0 && out.signature_valid &&
-    out.kernel_replay_consistent;
+  // Reduced-scope core for unparseable-request receipts: everything the
+  // receipt carries is verified; what it honestly cannot carry (canonical
+  // request re-derivation, kernel replay) is excluded rather than failed.
+  out.verificationCore = out.unparseableRequest
+    ? out.formatOk && out.kernelShaMatch && out.bindingOk &&
+      out.grantErrors.length === 0 && out.signature_valid && out.kernelMaterialConsistent === true
+    : out.formatOk && out.kernelShaMatch && out.requestHashMatch &&
+      out.bindingOk && out.grantErrors.length === 0 && out.signature_valid &&
+      out.kernel_replay_consistent;
   out.outcome = !out.verificationCore || out.authority_trusted === false
     ? "failure"
-    : out.authority_trusted === true ? "authorised" : "unpinned";
+    : out.authority_trusted !== true ? "unpinned"
+    : out.unparseableRequest ? "authorised-unparseable" : "authorised";
   out.allGood = out.outcome === "authorised";
   return out;
 }
@@ -128,17 +194,29 @@ function report(result, receiptPath) {
   console.log(`  receipt verdict: ${receipt.verdict || "?"}   kernel: ${(receipt.kernel_identity?.wasm_sha256 || "?").slice(0, 12)}`);
   if (result.formatErrors?.length) console.log(`  FAIL  schema valid   (${result.formatErrors.join("; ")})`);
   console.log(`  kernel_sha_match: ${result.kernelShaMatch === true}`);
-  console.log(`  request_hash_match: ${result.requestHashMatch === true}`);
+  if (result.unparseableRequest) {
+    console.log(`  request_hash_match: n/a — unparseable request; raw line identity ${String(result.rawLineIdentity || "").slice(0, 12)}… only`);
+  } else {
+    console.log(`  request_hash_match: ${result.requestHashMatch === true}`);
+  }
   console.log(`  binding_ok: ${result.bindingOk === true}`);
   console.log(`  signature_valid: ${result.signature_valid}`);
-  console.log(`  kernel_replay_consistent: ${result.kernel_replay_consistent}`);
+  if (result.unparseableRequest) {
+    console.log(`  kernel_replay_consistent: n/a — no (tool, arguments) to replay; kernel material self-consistent: ${result.kernelMaterialConsistent === true}`);
+  } else {
+    console.log(`  kernel_replay_consistent: ${result.kernel_replay_consistent}`);
+  }
   console.log(`  authority_trusted: ${result.authority_trusted}`);
   if (result.config_freshness) console.log(
     `  config_freshness: ${result.config_freshness.field}=${result.config_freshness.value}; rollback_enforced=${result.config_freshness.rollback_enforced}`);
   if (result.outcome === "authorised") {
     console.log("  PASS  AUTHORISED (signed by pinned operator key)");
+  } else if (result.outcome === "authorised-unparseable") {
+    console.log(`  PASS  AUTHORISED (raw-line identity only: wire line not re-parseable — ${receipt.request_parse_error}; no canonical replay possible)`);
   } else if (result.outcome === "unpinned") {
-    console.log(`  FAIL  UNPINNED (authentic + replay-consistent; independently pin ${receipt.signed_config.pubkey})`);
+    console.log(result.unparseableRequest
+      ? `  FAIL  UNPINNED (authentic, raw-line identity only — no replay possible; independently pin ${receipt.signed_config.pubkey})`
+      : `  FAIL  UNPINNED (authentic + replay-consistent; independently pin ${receipt.signed_config.pubkey})`);
   } else if (result.notMediated) {
     console.log("  FAIL  NOT MEDIATED (bypass receipt)");
   } else {

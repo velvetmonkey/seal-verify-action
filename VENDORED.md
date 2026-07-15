@@ -24,9 +24,9 @@ against the working tree on every run (`sha256sum -c`), so a stale or edited
 vendored file fails the build.
 
 ```
-322d2b0d8be8c2f0ff5464b15d51003c36e56aad194320a49816716c11ff51af  src/verify.cjs
+ccd49e0715d814429047213ccd0047da163e7d7035eece54e1c1e2123f6af9bf  src/verify.cjs
 e8a0148e3803cbf68bfd46a0fc272945deb970f5c3e85ac55bee6f6666efb67b  kernel/runner.cjs
-d35632819650386ae57d1020ca2389727bcf03ea40f4e208942658fae6fd0f46  kernel/receipt-format.js
+fe702d0b4d971a4fe16d649d2016b1e14cda6672d92d0a0a190656809279b2d2  kernel/receipt-format.js
 d93c26b75adf40c9d60a10079fe92f666777fe69729b006abe7aba60685fb8e8  kernel/kernel.js
 9ef462c22ad85e539d2170a4d43965d45a35def8878246649bbc6534f1607929  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
