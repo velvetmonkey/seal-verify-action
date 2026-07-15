@@ -1,5 +1,8 @@
 # seal-verify-action
 
+[![CI](https://github.com/velvetmonkey/seal-verify-action/actions/workflows/ci.yml/badge.svg)](https://github.com/velvetmonkey/seal-verify-action/actions/workflows/ci.yml)
+[![selftest](https://github.com/velvetmonkey/seal-verify-action/actions/workflows/selftest.yml/badge.svg)](https://github.com/velvetmonkey/seal-verify-action/actions/workflows/selftest.yml)
+
 **Add this to CI. Green means the signed config is authentic, replay-consistent where replay applies, and authorised by your independently provisioned operator-key pin.**
 
 For every matched receipt the action verifies its exact Ed25519 `signed_config` and requires the signer to match `expected-config-pubkey`; every replay-applicable receipt is replayed through the pinned df42 kernel (§11.1 unparseable-request receipts verify by raw line identity instead, and the coverage is reported as `kernel_replay_scope`). Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
