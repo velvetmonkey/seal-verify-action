@@ -16,8 +16,19 @@ const RESULTS = [
 ];
 
 test("summarize counts verified vs everything else", () => {
-  assert.deepEqual(summarize(RESULTS), { verified: 1, failed: 4 });
-  assert.deepEqual(summarize([]), { verified: 0, failed: 0 });
+  assert.deepEqual(summarize(RESULTS), { verified: 1, reducedScope: 0, failed: 4 });
+  assert.deepEqual(summarize([]), { verified: 0, reducedScope: 0, failed: 0 });
+});
+
+test("reduced-scope is counted in failed AND surfaced separately", () => {
+  const withReduced = [
+    { relPath: "a.receipt.json", status: "verified" },
+    { relPath: "u.receipt.json", status: "reduced-scope" },
+    { relPath: "b.receipt.json", status: "not-verified" },
+  ];
+  // fail-closed: reduced-scope is inside `failed` (a `failed==0` gate refuses
+  // it), and also reported on its own so VERIFIED != REDUCED-SCOPE != failure.
+  assert.deepEqual(summarize(withReduced), { verified: 1, reducedScope: 1, failed: 2 });
 });
 
 test("markdown carries pin, patterns, one row per result, counts", () => {
@@ -29,7 +40,7 @@ test("markdown carries pin, patterns, one row per result, counts", () => {
   });
   assert.match(md, /seal-assurance-kit 0\.0\.1/);
   assert.match(md, new RegExp(pin.KIT_COMMIT.slice(0, 7)));
-  assert.match(md, /\*\*1 verified, 4 failed\.\*\*/);
+  assert.match(md, /\*\*1 verified, 4 failed \(0 at reduced scope\)\.\*\*/);
   assert.match(md, /✅ AUTHORISED/);
   assert.match(md, /❌ NOT MEDIATED \(bypass\)/);
   assert.match(md, /❌ NOT FOUND/);
@@ -40,12 +51,12 @@ test("markdown carries pin, patterns, one row per result, counts", () => {
 test("replay column renders n/a when replay does not apply, never false", () => {
   const md = toMarkdown(
     [
-      { relPath: "u.receipt.json", status: "verified", detail: "unparseable request — kernel-attested request binding (audit sha256 = request_sha256); no canonical replay possible", signature_valid: true, kernel_replay_consistent: false, replay_applicable: false, authority_trusted: true },
+      { relPath: "u.receipt.json", status: "reduced-scope", detail: "REDUCED SCOPE — unparseable request: kernel-attested request binding (audit sha256 = request_sha256), Ed25519-signed config; no canonical replay — NOT independently verified", signature_valid: true, kernel_replay_consistent: false, replay_applicable: false, authority_trusted: true },
       { relPath: "a.receipt.json", status: "verified", detail: "", signature_valid: true, kernel_replay_consistent: true, replay_applicable: true, authority_trusted: true },
     ],
     { pin, verifierVersion: "", patterns: ["**/*.receipt.json"], workingDirectory: "." }
   );
-  assert.match(md, /\| `u\.receipt\.json` \| ✅ AUTHORISED \| true \| n\/a \|/);
+  assert.match(md, /\| `u\.receipt\.json` \| ⚠️ REDUCED SCOPE \(authorised-unparseable\) — NOT independently verified \| true \| n\/a \|/);
   assert.match(md, /\| `a\.receipt\.json` \| ✅ AUTHORISED \| true \| true \|/);
   assert.match(md, /Replay scope: 1\/2 applicable\./);
 });

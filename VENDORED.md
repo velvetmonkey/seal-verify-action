@@ -24,7 +24,7 @@ against the working tree on every run (`sha256sum -c`), so a stale or edited
 vendored file fails the build.
 
 ```
-f0865d4360229c0ccd6eefbe683fba97fe274696d5c2058f724eae5d5ad51c1d  src/verify.cjs
+a1f8ba53631005e01088863834adb73846fefac039b4b147b748748903ebed84  src/verify.cjs
 e8a0148e3803cbf68bfd46a0fc272945deb970f5c3e85ac55bee6f6666efb67b  kernel/runner.cjs
 fe702d0b4d971a4fe16d649d2016b1e14cda6672d92d0a0a190656809279b2d2  kernel/receipt-format.js
 97a8aee1660584ff3cd0f169a2db823bb3685d8ed0b35503bd726daef3946a01  kernel/kernel.js
@@ -45,6 +45,14 @@ The wasm and Emscripten glue are byte-identical to the assurance-kit base.
 The JS receipt seam overlays the already-shipped `seal-check@400079c`
 `signed_config` consumption, byte bindings, Ed25519, and tri-state authority
 behavior. The checksums above pin the resulting hermetic closure explicitly.
+
+`src/verify.cjs` additionally carries the fleet P0 overlay (parity with kit
+`706d644`): the `authorised-unparseable` console banner reports **REDUCED SCOPE
+— NOT independently verified**, never a `PASS AUTHORISED`. The gating verdict
+(exit code / step outcome) is the action's own `lib/` layer, which maps this
+outcome to its distinct `reduced-scope` status; the vendored banner is the
+human-readable half. That is why the `src/verify.cjs` hash above differs from
+the kit base `f0865d4…`.
 
 ## Re-vendoring procedure
 

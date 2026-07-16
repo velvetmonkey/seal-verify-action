@@ -38,11 +38,22 @@ inputs:
 
 outputs:
   verified:
-    description: Count of receipts authorised by the independently pinned signer.
+    description: >-
+      Count of receipts independently verified by the pinned signer (full
+      replay). Excludes reduced-scope (§11.1 authorised-unparseable) receipts.
+  reduced_scope:
+    description: >-
+      Count of receipts at REDUCED SCOPE (schema §11.1 authorised-unparseable):
+      the Ed25519-signed config and kernel-attested request binding verify, but
+      the wire line is not re-parseable so no independent replay is possible —
+      NOT independently verified. Counted within `failed`; the step never passes
+      (exit 0) while this is nonzero.
   failed:
     description: >-
-      Count of receipts that failed: NOT VERIFIED, NOT MEDIATED (bypass),
-      verifier error, or a listed file that does not exist.
+      Count of receipts that did not pass: NOT VERIFIED, NOT MEDIATED (bypass),
+      verifier error, a listed file that does not exist, OR at reduced scope
+      (§11.1, also counted in reduced_scope). A gate keying on `failed == 0`
+      fails closed on reduced-scope receipts.
   signature_valid:
     description: True only when every matched receipt has a valid Ed25519 signed_config.
   kernel_replay_consistent:

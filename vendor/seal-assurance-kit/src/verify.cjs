@@ -256,7 +256,7 @@ function report(result, receiptPath) {
   if (result.outcome === "authorised") {
     console.log("  PASS  AUTHORISED (signed by pinned operator key)");
   } else if (result.outcome === "authorised-unparseable") {
-    console.log(`  PASS  AUTHORISED (unparseable request — kernel-attested request binding: the kernel's audit commits to sha256 of the exact bytes it judged and it matches request_sha256; wire line not re-parseable — ${receipt.request_parse_error}; no canonical replay possible)`);
+    console.log(`  REDUCED SCOPE (authorised-unparseable): kernel-attested request binding (the kernel's audit commits to sha256 of the exact bytes it judged and it matches request_sha256) and Ed25519-signed policy; wire line not re-parseable — ${receipt.request_parse_error}; no canonical replay — NOT independently verified`);
   } else if (result.outcome === "unpinned") {
     console.log(result.unparseableRequest
       ? `  FAIL  UNPINNED (authentic, kernel-attested request binding — no replay possible; independently pin ${receipt.signed_config.pubkey})`
