@@ -1,4 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
+// FORK DELTA (seal-verify-action, tracks kit@0aeb35a but is NOT a byte snapshot):
+// this is the action's trust-anchor verifier, NOT kit's src/verify.cjs. It adds
+// verifyReceipt + the expected-config-pubkey trust anchor -> authority_trusted
+// (true / "unpinned" / false) -> the 0/4/3/1 exit-code contract, and requires a
+// valid signed_config for an authorised outcome. Kit's own verify.cjs is
+// trust-rootless (no expectedConfigPubkey, no unpinned state); this copy is the
+// deliberate downstream-stricter one. Do NOT flatten to kit HEAD in a vendor-sync
+// sweep. See VENDORED.md "Fork deltas".
 // Independent df42 receipt verification, mirrored from seal-check@400079c.
 // The verifier consumes the receipt's exact signed_config bytes and requires
 // an independently provisioned public-key pin for an authorised outcome.

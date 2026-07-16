@@ -1,4 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
+// FORK DELTA (seal-verify-action, tracks kit@0aeb35a but is NOT a byte snapshot):
+// signs with a FIXED RFC-8032 test key (not kit HEAD's ephemeral per-process key),
+// `decide` emits signed_config, and it adds `decideSigned` — the verify path that
+// inits seal_init from the RECEIPT's own signed_config envelope and reports
+// signature_valid. Load-bearing for the action's signature/authority verdicts.
+// Do NOT flatten to kit HEAD in a vendor-sync sweep. See VENDORED.md "Fork deltas".
 // Node runner for the vendored seal kernel (wasm/seal.js + seal.wasm).
 // Loads the SAME public wasm the browser seal-check uses, runs one decision,
 // and builds the canonical receipt. Trusts nothing: hashes the binary itself.

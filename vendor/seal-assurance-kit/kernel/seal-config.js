@@ -1,4 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
+// FORK DELTA (seal-verify-action, tracks kit@0aeb35a but is NOT a byte snapshot):
+// PUBKEY + buildSignedConfig perform REAL Ed25519 signing with the fixed RFC-8032
+// test-vector-1 key (kit HEAD ships a `demo-pk` stub signer here). Deterministic
+// real signatures are what make the action's fixtures verifiable. Do NOT flatten
+// to kit HEAD in a vendor-sync sweep. See VENDORED.md "Fork deltas".
 // Shared demo config + scenario definitions for the in-browser WASM evaluator and
 // the native conformance harness. Pure ES module (browser + node). NO kernel source
 // here — only the public trusted-config payloads the black-box evaluator consumes.

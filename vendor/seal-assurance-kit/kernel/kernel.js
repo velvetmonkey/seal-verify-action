@@ -1,4 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
+// FORK DELTA (seal-verify-action, tracks kit@0aeb35a but is NOT a byte snapshot):
+// buildReceipt() takes `signedConfig` and emits the `signed_config` object. Kit
+// HEAD dropped signed_config from the kernel path (signing moved to
+// src/policy-sign.cjs); this fork keeps it because the action's verifier requires
+// signed_config for signature_valid / authority_trusted / the exit-code contract.
+// Do NOT flatten to kit HEAD in a vendor-sync sweep. See VENDORED.md "Fork deltas".
 // seal-check kernel glue — the ONLY new logic in seal-check.
 //
 // Loads the compiled black-box seal kernel (wasm/seal.js installs window.SealModule),
