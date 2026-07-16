@@ -12,7 +12,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 | version | `0.0.1` |
 | assurance-kit base | `b76027c9c8bb5c838e7fc571085a8127d4b33dc8` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
-| kernel wasm | `d3067bc07e74977dedf6bb96d79a710c4b61143f6e8db151655bc88ece8b9d66` |
+| kernel wasm | `ff1bfd68d7be51b6a395f94dfc46b2fb27ed11dc5833af6a84675f42f9730546` |
 
 The same pin is hard-coded in `lib/pin.js` and echoed in every step summary.
 Update both together.
@@ -27,11 +27,11 @@ vendored file fails the build.
 a1f8ba53631005e01088863834adb73846fefac039b4b147b748748903ebed84  src/verify.cjs
 e8a0148e3803cbf68bfd46a0fc272945deb970f5c3e85ac55bee6f6666efb67b  kernel/runner.cjs
 fe702d0b4d971a4fe16d649d2016b1e14cda6672d92d0a0a190656809279b2d2  kernel/receipt-format.js
-97a8aee1660584ff3cd0f169a2db823bb3685d8ed0b35503bd726daef3946a01  kernel/kernel.js
+96cf6691013b4c27d8ac5b8a4864fc028122a1d382e2da82a6da458ffebdbeb2  kernel/kernel.js
 9ef462c22ad85e539d2170a4d43965d45a35def8878246649bbc6534f1607929  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
-5a017fa4a71db7c214323c1dd1db415a96ec0afececf84f74ac1f4fc95dd972e  kernel/wasm/seal.js
-d3067bc07e74977dedf6bb96d79a710c4b61143f6e8db151655bc88ece8b9d66  kernel/wasm/seal.wasm
+4197af01de976c18399570be33cc53e6e704f3fc2129da4f0d16cb27313f3df2  kernel/wasm/seal.js
+ff1bfd68d7be51b6a395f94dfc46b2fb27ed11dc5833af6a84675f42f9730546  kernel/wasm/seal.wasm
 ```
 
 These eight files are the complete dependency closure of `seal verify`
