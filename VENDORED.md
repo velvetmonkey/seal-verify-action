@@ -13,6 +13,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 | **base kit revision this fork tracks** | `0aeb35a60adfa4c50b6bfcf761967b1c6280fde7` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
 | kernel wasm (byte-identical to base) | `ff1bfd68d7be51b6a395f94dfc46b2fb27ed11dc5833af6a84675f42f9730546` |
+| verify profile (kit `docs/VERIFY-PROFILES.md`) | `P-ENFORCE` (the base kit's verifier is `P-REF` — that profile split IS the fork) |
 
 `KIT_COMMIT` (here and in `lib/pin.js`) is the **base kit revision this vendor
 tracks**, not a byte-identical snapshot. The vendored verifier is a **deliberate
