@@ -12,7 +12,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 | version | `0.0.1` |
 | **base kit revision this fork tracks** | `0aeb35a60adfa4c50b6bfcf761967b1c6280fde7` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
-| kernel wasm (byte-identical to base) | `ff1bfd68d7be51b6a395f94dfc46b2fb27ed11dc5833af6a84675f42f9730546` |
+| kernel wasm (byte-identical to seal-host `wasm-spike/verified/`, a3790181 era) | `a37901811df4767fd08142243622b8372254e6ec5bd2d3aca18f0e61d0f109af` |
 | verify profile (kit `docs/VERIFY-PROFILES.md`) | `P-ENFORCE` (the base kit's verifier is `P-REF` — that profile split IS the fork) |
 
 `KIT_COMMIT` (here and in `lib/pin.js`) is the **base kit revision this vendor
@@ -63,11 +63,11 @@ vendored file fails the build.
 27a475556c6ccf8c18e505457570509879187def01cbba550d941b6da678b45e  src/verify.cjs
 9397adcdc423ce03940040339eace39d06a529f514b978a82ebd83419a48c247  kernel/runner.cjs
 5c05c12f1c96454b7ece8705f6891b8ebcfa9500d49f012935c48f428577888e  kernel/receipt-format.js
-ab2a1c458fefa87f7ee3f23f4ac82a767f51066b55af274545d3075922018849  kernel/kernel.js
+49832013b170fccf0ffba54f7946f37a332d88d16c9ea2286b0932da899f182f  kernel/kernel.js
 bc073812b30fe120aeeb533360a0440f2d482da65d7c89a272b09fe3786cb524  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
-4197af01de976c18399570be33cc53e6e704f3fc2129da4f0d16cb27313f3df2  kernel/wasm/seal.js
-ff1bfd68d7be51b6a395f94dfc46b2fb27ed11dc5833af6a84675f42f9730546  kernel/wasm/seal.wasm
+1b565eef3373b56b56ed295ddf5511c76f2ba3a24856640165cb2eb84309ffc5  kernel/wasm/seal.js
+a37901811df4767fd08142243622b8372254e6ec5bd2d3aca18f0e61d0f109af  kernel/wasm/seal.wasm
 ```
 
 These eight files are the complete dependency closure of `seal verify`
@@ -80,8 +80,11 @@ gen-receipt,init,policy-sign,receipt-diff,recipes,scan,test,trusted-config}.cjs`
 — kit's scan/test/adequacy/policy-signing CLIs and their support files. The
 action verifies receipts; it does not sign policies or run the kit's dev tooling.
 
-The `wasm` + Emscripten glue are byte-identical to the base kit revision
-(`ff1bfd68…` / `4197af01…`; unchanged by this re-vendor — no rebuild). The five
+The `wasm` + Emscripten glue are byte-identical to the seal-host
+`wasm-spike/verified/` a3790181-era artifacts (`a3790181…` / `1b565eef…`;
+copied, never rebuilt — they supersede the base kit revision's `ff1bfd68…` /
+`4197af01…` pair; the fleet repin moves the kernel ahead of kit `0aeb35a`,
+same fork-modulo-header contract). The five
 JS files differ from kit `0aeb35a` only by the Fork deltas above (each carries a
 `FORK DELTA` header). The cross-copy differential
 (`test/cross-copy-differential.test.js`) pins the vendored verifier against the
