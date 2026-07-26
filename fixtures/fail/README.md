@@ -9,4 +9,13 @@ refuse. A green run on this directory is a broken verifier.
   hex digit of `request_sha256` flipped: authentic kernel material paired
   with a request the kernel did not judge. The kernel-attested request
   binding (the audit's own sha256 of the judged bytes) catches it. Before
-  the kernel committed to its judged bytes, this forgery VERIFIED.
+  the kernel committed to its judged bytes, this forgery VERIFIED. Generate
+  it from a freshly native-minted unparseable receipt with:
+
+  ```sh
+  node scripts/gen-forged-binding-fixture.cjs \
+    /path/to/receipt-unparseable.json \
+    fixtures/fail/forged-binding.receipt.json
+  ```
+
+  Never edit its kernel identity or signed config by hand.

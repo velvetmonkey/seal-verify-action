@@ -10,4 +10,6 @@ failure. INVALID != REDUCED-SCOPE != VERIFIED.
   independent replay is possible, so it is **NOT independently verified**. The
   action reports it `reduced-scope` (⚠️), counts it in `failed`, and the step
   fails (exit 4) — it is deliberately kept out of `fixtures/pass/`, where every
-  receipt must reach `verified`.
+  receipt must reach `verified`. Re-mint it through seal-host's native producer
+  with a policy accepted by the current host schema, then import that generated
+  output; never edit its receipt fields by hand.
