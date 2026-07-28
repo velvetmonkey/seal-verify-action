@@ -40,6 +40,10 @@ test("unparseable-request receipt validates clean; fabrication rejected (§11.2)
   const unp = F.assembleReceiptV2(unparseableFields(F));
   const v = F.validateReceipt(unp);
   assert.deepEqual([v.ok, v.version, v.errors], [true, "v2", []]);
+  const current = { ...unp, record_type: "seal.authorization-decision", record_version: 2 };
+  delete current.seal_receipt;
+  assert.deepEqual(F.validateReceipt(current), { ok: true, version: "v2", errors: [] });
+  assert.equal(F.validateReceipt({ ...current, request_sha256: "nothex" }).ok, false);
   for (const [k, vv] of [["tool", "db.execute"], ["arguments", {}],
     ["args_hash", "0".repeat(64)], ["canonical_request", "{}"],
     ["canonical_request_sha256", "0".repeat(64)]]) {
