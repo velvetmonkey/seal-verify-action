@@ -64,7 +64,7 @@ test("verifyReceipt reports the distinct reduced-scope state, never a false matc
   const { verifyReceipt } = require("../vendor/seal-assurance-kit/src/verify.cjs");
   const { kernelSha, CONFIG_PUBKEY } = require("../vendor/seal-assurance-kit/kernel/runner.cjs");
   // Synthetic-from-real: the exact field set seal-host main @ 3a74dbf emits on
-  // a 1e309 line, signed with the fleet's public test seed (RFC 8032 vector 1).
+  // an argument-less call, signed with the fleet's public test seed (RFC 8032 vector 1).
   const seed = "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
   const key = crypto.createPrivateKey({
     key: Buffer.from("302e020100300506032b657004220420" + seed, "hex"),

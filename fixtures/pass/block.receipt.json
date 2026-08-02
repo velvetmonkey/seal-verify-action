@@ -11,14 +11,14 @@
   "canonical_request_sha256": "460d746ba064ab9398885158dddfd6d32f1722b0efe0d3b6085c8441e9127793",
   "bypass": false,
   "verdict": "BLOCK",
-  "reason": "safety kernel: 3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783",
+  "reason": "safety kernel: 85545fe075783b72f2703c8b4769da0b5ef1962bc2e8ecf62e3c9bf366a65aca",
   "deny_kernel": "safety",
   "certs": [
     {
       "kernel": "safety",
       "verdict": "deny",
-      "reason": "3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783",
-      "certHash": "6380476400602841210"
+      "reason": "85545fe075783b72f2703c8b4769da0b5ef1962bc2e8ecf62e3c9bf366a65aca",
+      "certHash": "15905329309224772208"
     },
     {
       "kernel": "temporal",
@@ -27,9 +27,9 @@
       "certHash": "12756644985251018087"
     }
   ],
-  "emitted_bytes": "{\"audit\":\"{\\\"certs\\\":[{\\\"certHash\\\":\\\"6380476400602841210\\\",\\\"kernel\\\":\\\"safety\\\",\\\"reason\\\":\\\"3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783\\\",\\\"verdict\\\":\\\"deny\\\"},{\\\"certHash\\\":\\\"12756644985251018087\\\",\\\"kernel\\\":\\\"temporal\\\",\\\"reason\\\":\\\"trace ok (1 events)\\\",\\\"verdict\\\":\\\"allow\\\"}],\\\"epoch\\\":1,\\\"request_sha256\\\":\\\"460d746ba064ab9398885158dddfd6d32f1722b0efe0d3b6085c8441e9127793\\\",\\\"tool\\\":\\\"db.execute\\\",\\\"verdict\\\":\\\"deny\\\"}\",\"response\":\"{\\\"id\\\":1,\\\"jsonrpc\\\":\\\"2.0\\\",\\\"result\\\":{\\\"content\\\":[{\\\"text\\\":\\\"approval required: 3c4d52262e213368bda15abc0f2c3ae14fecfc015f3878f1714add48437e0783\\\",\\\"type\\\":\\\"text\\\"}],\\\"isError\\\":true}}\\n\",\"route\":\"block\"}",
+  "emitted_bytes": "{\"audit\":\"{\\\"certs\\\":[{\\\"certHash\\\":\\\"15905329309224772208\\\",\\\"kernel\\\":\\\"safety\\\",\\\"reason\\\":\\\"85545fe075783b72f2703c8b4769da0b5ef1962bc2e8ecf62e3c9bf366a65aca\\\",\\\"verdict\\\":\\\"deny\\\"},{\\\"certHash\\\":\\\"12756644985251018087\\\",\\\"kernel\\\":\\\"temporal\\\",\\\"reason\\\":\\\"trace ok (1 events)\\\",\\\"verdict\\\":\\\"allow\\\"}],\\\"epoch\\\":1,\\\"request_sha256\\\":\\\"460d746ba064ab9398885158dddfd6d32f1722b0efe0d3b6085c8441e9127793\\\",\\\"tool\\\":\\\"db.execute\\\",\\\"verdict\\\":\\\"deny\\\"}\",\"response\":\"{\\\"id\\\":1,\\\"jsonrpc\\\":\\\"2.0\\\",\\\"result\\\":{\\\"content\\\":[{\\\"text\\\":\\\"approval required: 85545fe075783b72f2703c8b4769da0b5ef1962bc2e8ecf62e3c9bf366a65aca\\\",\\\"type\\\":\\\"text\\\"}],\\\"isError\\\":true}}\\n\",\"route\":\"block\"}",
   "kernel_identity": {
-    "wasm_sha256": "d7d81e277ba0b5e9df385129d86abf6f7469e6da2a65bb2ec35626caa44ea2be",
+    "wasm_sha256": "0b5e792500592b56847f70b1e27e47aecdc65023c7c59fd79695102c465f26ec",
     "self_verified": true,
     "note": "Binary identity of the evaluator actually executed. Hashed in your browser from the loaded bytes and compared to a pinned constant. This is the ONLY thing verified here."
   },
@@ -44,8 +44,8 @@
     "note": "What the public Lean proofs ASSERT about the kernel source. NOT verified in your browser and NOT part of the hash above."
   },
   "signed_config": {
-    "payload": "{\"epoch\":1,\"safety\":{\"approval\":{\"control_file\":\"X\",\"ttl_seconds\":120},\"tools\":[{\"name\":\"db.execute\",\"mode\":\"guarded\",\"match\":{\"type\":\"contains_any_ci\",\"arg\":\"sql\",\"needles\":[\"drop\",\"delete\",\"truncate\"]},\"target\":[{\"literal\":\"db\"},{\"arg\":\"database\"},{\"literal\":\"write\"},{\"arg\":\"sql\"}]},{\"name\":\"payments.send\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"literal\":\"pay\"}]},{\"name\":\"session.revoke\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"literal\":\"revoke\"}]},{\"name\":\"store.update\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"literal\":\"store\"}]},{\"name\":\"key.use\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"literal\":\"key\"}]},{\"name\":\"approve\",\"mode\":\"deny\",\"match\":{\"type\":\"always\"},\"target\":[]}]},\"temporal\":{\"policies\":[]},\"consensus\":{\"roster\":[1,2,3],\"votes_file\":\"X\",\"high_stakes\":[\"payments.send\"]},\"convergence\":{\"tools\":[{\"tool\":\"store.update\",\"op_arg\":\"op\"}]}}",
-    "signature": "77d06738955b6f6bc68cf83c7fdda9bbf1242f4a383e3bd059c9c9122e6ede5e650d074011cae481dac33d24dabf60047220ef06f6ac3cf091d2d924c10f3b06",
+    "payload": "{\"epoch\":1,\"safety\":{\"approval\":{\"control_file\":\"X\",\"ttl_seconds\":120},\"tools\":[{\"name\":\"db.execute\",\"mode\":\"guarded\",\"match\":{\"type\":\"contains_any_ci\",\"arg\":\"sql\",\"needles\":[\"drop\",\"delete\",\"truncate\"]},\"target\":[{\"full_arguments\":true}]},{\"name\":\"payments.send\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"full_arguments\":true}]},{\"name\":\"session.revoke\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"full_arguments\":true}]},{\"name\":\"store.update\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"full_arguments\":true}]},{\"name\":\"key.use\",\"mode\":\"guarded\",\"match\":{\"type\":\"always\"},\"target\":[{\"full_arguments\":true}]},{\"name\":\"approve\",\"mode\":\"deny\",\"match\":{\"type\":\"always\"},\"target\":[]}]},\"temporal\":{\"policies\":[]},\"consensus\":{\"roster\":[1,2,3],\"votes_file\":\"X\",\"high_stakes\":[\"payments.send\"]},\"convergence\":{\"tools\":[{\"tool\":\"store.update\",\"op_arg\":\"op\"}]}}",
+    "signature": "583eba507d54586eea4d279c3a2747319cd82d2e0d2a383d3f04e214e7acd61ce502066cd44edd3a28bd4f7cd03c50ce55292f7c2e54f4630e74f474d0def703",
     "pubkey": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
   },
   "kernel_config": {
@@ -70,16 +70,7 @@
           },
           "target": [
             {
-              "literal": "db"
-            },
-            {
-              "arg": "database"
-            },
-            {
-              "literal": "write"
-            },
-            {
-              "arg": "sql"
+              "full_arguments": true
             }
           ]
         },
@@ -91,7 +82,7 @@
           },
           "target": [
             {
-              "literal": "pay"
+              "full_arguments": true
             }
           ]
         },
@@ -103,7 +94,7 @@
           },
           "target": [
             {
-              "literal": "revoke"
+              "full_arguments": true
             }
           ]
         },
@@ -115,7 +106,7 @@
           },
           "target": [
             {
-              "literal": "store"
+              "full_arguments": true
             }
           ]
         },
@@ -127,7 +118,7 @@
           },
           "target": [
             {
-              "literal": "key"
+              "full_arguments": true
             }
           ]
         },

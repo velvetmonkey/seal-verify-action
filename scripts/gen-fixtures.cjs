@@ -14,7 +14,7 @@ const OUT = path.resolve(__dirname, "../fixtures/pass");
   })).receipt;
   const allow = (await decide(cfg.CFG_STANDARD, {
     tool: "store.update", args: { op: "orset.add", key: "k1" },
-    approvals: [cfg.stableHash(["store.update", "store"])],
+    approvals: [cfg.guardTarget("store.update", { op: "orset.add", key: "k1" })],
   })).receipt;
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(path.join(OUT, "block.receipt.json"), JSON.stringify(block, null, 2) + "\n");

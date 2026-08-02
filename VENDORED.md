@@ -12,7 +12,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 | version | `0.0.1` |
 | **base kit revision this fork tracks** | `0aeb35a60adfa4c50b6bfcf761967b1c6280fde7` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
-| kernel wasm (byte-identical to the current fleet build) | `d7d81e277ba0b5e9df385129d86abf6f7469e6da2a65bb2ec35626caa44ea2be` |
+| kernel wasm (byte-identical to the current fleet build) | `0b5e792500592b56847f70b1e27e47aecdc65023c7c59fd79695102c465f26ec` |
 | verify profile (kit `docs/VERIFY-PROFILES.md`) | `P-ENFORCE` (the base kit's verifier is `P-REF` — that profile split IS the fork) |
 
 `KIT_COMMIT` (here and in `lib/pin.js`) is the **base kit revision this vendor
@@ -62,12 +62,12 @@ vendored file fails the build.
 ```
 27a475556c6ccf8c18e505457570509879187def01cbba550d941b6da678b45e  src/verify.cjs
 9397adcdc423ce03940040339eace39d06a529f514b978a82ebd83419a48c247  kernel/runner.cjs
-5c05c12f1c96454b7ece8705f6891b8ebcfa9500d49f012935c48f428577888e  kernel/receipt-format.js
-47cda2a5becd1e855be7905214dc2b5db81427fdcdff865ef1f41695dd97c324  kernel/kernel.js
-bc073812b30fe120aeeb533360a0440f2d482da65d7c89a272b09fe3786cb524  kernel/seal-config.js
+83749603b79002e85df69408773e00af3fd6aaf1ce3ef05222db048ffea91c66  kernel/receipt-format.js
+9d36e977f9d7e0d7a715edcb02da17771885f3bfe9ef77081a48064af7edbf66  kernel/kernel.js
+f8dcd7f39bc77151a6433c81ddf0e3c175772550ab30344c0788a5cf33ed45e1  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
-1b565eef3373b56b56ed295ddf5511c76f2ba3a24856640165cb2eb84309ffc5  kernel/wasm/seal.js
-d7d81e277ba0b5e9df385129d86abf6f7469e6da2a65bb2ec35626caa44ea2be  kernel/wasm/seal.wasm
+aa6996d130057815cf493a5097a515c58b89df2ae832f2277110bc66d30cdf17  kernel/wasm/seal.js
+0b5e792500592b56847f70b1e27e47aecdc65023c7c59fd79695102c465f26ec  kernel/wasm/seal.wasm
 ```
 
 These eight files are the complete dependency closure of `seal verify`
@@ -80,8 +80,8 @@ gen-receipt,init,policy-sign,receipt-diff,recipes,scan,test,trusted-config}.cjs`
 — kit's scan/test/adequacy/policy-signing CLIs and their support files. The
 action verifies receipts; it does not sign policies or run the kit's dev tooling.
 
-The wasm is byte-identical to the current fleet build (`d7d81e27…`); the
-Emscripten glue remains `1b565eef…`. Both are copied, never rebuilt here.
+The wasm is byte-identical to the current fleet build (`0b5e7925…`); the
+Emscripten glue is `aa6996d…`. Both are copied, never rebuilt here.
 They supersede the base kit revision's `ff1bfd68…` / `4197af01…` pair; the
 fleet repin moves the kernel ahead of kit `0aeb35a`, under the same
 fork-modulo-header contract. The five
