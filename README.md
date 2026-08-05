@@ -43,9 +43,9 @@ Bad receipt = red build. Visible in terminal.
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 
 <!-- truthbox:begin -->
-> **Runtime profile: `compatible` (inherited).** This action re-runs a vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's profile and proofs and adds none of its own. Strict `canonical-l0` is proved and modelled, not the deployed route yet.
-> **Claim:** in CI, green means every matched receipt has a valid signed config, its signer matched the independently configured operator pin, and every replay-applicable receipt replayed byte-identically through df42 — unparseable-request receipts (§11.1) verify at raw-line-identity scope instead, with replay coverage disclosed as `kernel_replay_scope`.
-> **Non-claim:** it does NOT re-prove the kernel or establish that the pinned operator chose a good policy. It cannot say anything about an effect that produced no receipt.
+> **Runtime profile: `compatible`.** Strict `canonical-l0` is proved and modelled, not the deployed route yet.
+> **Claim:** policy-covered request-effects recognised by the compatible MCP boundary reach the downstream child MCP server only after every applicable Lean kernel returns Allow. Effects configured as guarded additionally require a matching live approval record. Seam failures block; every mediated decision emits replayable evidence.
+> **Non-claim:** the deployed host is not proved end to end, and canonical parser rejection is not currently the runtime gate. Host `ApprovalRecord` tokens are a separate signed channel from the v2 kernel-defined approval tuple. “Canonical” in Seal names the pinned kernel byte rule, not RFC 8785/JCS. Seal verifies the configured authorization evidence. Whether that evidence represents the intended human, device or service is an identity and key-custody assumption, not a proved property.
 <!-- truthbox:end -->
 > Map: canonical claims in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) · truth box in [docs/TRUTH-BOX.md](docs/TRUTH-BOX.md) · family: [seal](https://github.com/velvetmonkey/seal). Inheritance, not ownership — the verifier's home is [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit) (see [VENDORED.md](VENDORED.md)).
 
