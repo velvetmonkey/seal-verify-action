@@ -7,8 +7,9 @@ verbatim between the same markers; `scripts/claims-drift.mjs` enforces equality,
 so edit here first, then mirror.
 
 The action **inherits** the Seal family's non-claims (it re-runs a vendored,
-sha256-pinned copy of the verifier and strengthens none of them) and adds a few
-that are specific to being a CI wrapper.
+sha256-pinned, downstream-stricter fork of the verifier and weakens none of them;
+the fork's one delta is stricter — a required `signed_config` trust anchor, see
+VENDORED.md) and adds a few that are specific to being a CI wrapper.
 
 <!-- claims:begin -->
 - Seal proves properties of the mediation KERNEL, not of the whole deployed system.
@@ -19,7 +20,8 @@ that are specific to being a CI wrapper.
 - Seal's audit chain is tamper-EVIDENT, not tamper-IMPOSSIBLE.
 - Seal does NOT make the AI smarter or prevent hallucinations; it stops an unapproved effect.
 - Axiom footprint {propext, Classical.choice, Quot.sound} is the minimal classical fragment; no extra axioms.
-- seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned copy of `seal verify` (see VENDORED.md) and inherits exactly that verifier's guarantees and limits — no more.
+- The axiom-footprint line is a per-theorem ceiling for theorems named in the family's axiom-pin gates; it is not a repository-wide census. Pin scope and named exceptions are indexed in the seal claims matrix (seal/docs/CLAIMS-MATRIX.md).
+- seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned, downstream-stricter fork of `seal verify` (see VENDORED.md); it inherits that verifier's guarantees and limits and adds exactly one stricter requirement — a valid `signed_config` trust anchor for any authorised outcome — nothing weaker.
 - A green build attests that matched receipts authenticated, matched the configured authority, and that every replay-applicable receipt replayed consistently (unparseable-request receipts verify at raw-line-identity scope; coverage is disclosed as `kernel_replay_scope`); it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
 - The action adds no theorem about itself; its trust rests on the pinned verifier bytes and the independently provisioned operator public key, not on receipt-supplied authority claims.
 <!-- claims:end -->

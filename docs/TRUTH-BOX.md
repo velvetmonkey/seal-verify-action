@@ -2,7 +2,8 @@
 
 <!-- Canonical copy of this action's truth-box: runtime profile, claim,
      non-claim — framed as INHERITANCE, not ownership. The action re-runs a
-     vendored, sha256-pinned copy of `seal verify`; it inherits that verifier's
+     vendored, sha256-pinned, downstream-stricter fork of `seal verify` (see
+     VENDORED.md); it inherits that verifier's
      profile and proofs and proves nothing new of its own. The README mirrors
      the three lines verbatim between the same markers. The per-repo "Map" line
      is NOT part of this block. Edit here first; scripts/claims-drift.mjs
