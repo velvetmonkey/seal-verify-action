@@ -12,7 +12,7 @@ All "fails the build", "zero matched = fail", "pinned" preserved.
 |-------|---------|----------|--------|
 | Re-derives verdict from receipt's policy+call via pinned kernel; fails build on bad receipt. | Yes (runnable in CI) | lib/ + action.yml + test/main.test.js + fixtures/fail/ | keep |
 | Zero matched receipts fails the step (misconfig). | Yes (tested) | lib/main.js + test | keep |
-| Deterministic, hermetic, vendored+sha256-pinned from assurance-kit. | Yes (documented + VENDORED.md) | VENDORED.md + package | keep |
+| Deterministic, hermetic, vendored+sha256-pinned from assurance-kit as a maintained downstream-stricter fork (signed-config trust anchor; five named delta files). | Yes (documented + VENDORED.md) | VENDORED.md + package | keep |
 
 ## NEEDS BEN
 - Actual GH Actions run (fixtures + code + vendored provide the verification).

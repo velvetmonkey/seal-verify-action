@@ -111,8 +111,8 @@ checks in [What this checks — and what it does not](#what-this-checks--and-wha
   on a typo is worse than no gate. Missing literal paths likewise count as
   failures rather than being dropped.
 - Deterministic and hermetic: no network, no clock, receipts processed in
-  sorted order. The verifier is a vendored, sha256-pinned copy of
-  `seal verify` from seal-assurance-kit (see [VENDORED.md](VENDORED.md)) —
+  sorted order. The verifier is a vendored, sha256-pinned, downstream-stricter
+  fork of `seal verify` from seal-assurance-kit (see [VENDORED.md](VENDORED.md)) —
   consumers install nothing.
 
 There is deliberately no report-only success mode. If a workflow wants to observe an honest red result without stopping later jobs, use GitHub's native `continue-on-error: true` on the step and read the tri-state outputs. The action itself never turns failed verification green.
@@ -138,13 +138,16 @@ It does **not**:
 - prove anything about effects that produced **no receipt at all** — an
   unmediated call leaves nothing for this action to inspect;
 - extend the Seal proof story: the Lean theorems cover the mediation kernel;
-  this action is packaging around the conformance-tested verifier, tied to
-  the proof by the pinned kernel hash, not by a theorem about this repo.
+  this action is a pinned, downstream-stricter fork of the conformance-tested
+  verifier, tied to the proof by the pinned kernel hash, not by a theorem
+  about this repo.
 
 ## Mandatory non-claims (inherited)
 
 This action **inherits** the Seal family's non-claims — it re-runs a vendored,
-sha256-pinned copy of the verifier and strengthens none of them — and adds a few
+sha256-pinned, downstream-stricter fork of the verifier and weakens none of them;
+the fork's one delta is stricter (a required `signed_config` trust anchor, see
+[VENDORED.md](VENDORED.md)) — and adds a few
 specific to being a CI wrapper. Canonical copy: [docs/LIMITATIONS.md](docs/LIMITATIONS.md);
 `scripts/claims-drift.mjs` fails the build if this mirror drifts.
 
@@ -157,7 +160,8 @@ specific to being a CI wrapper. Canonical copy: [docs/LIMITATIONS.md](docs/LIMIT
 - Seal's audit chain is tamper-EVIDENT, not tamper-IMPOSSIBLE.
 - Seal does NOT make the AI smarter or prevent hallucinations; it stops an unapproved effect.
 - Axiom footprint {propext, Classical.choice, Quot.sound} is the minimal classical fragment; no extra axioms.
-- seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned copy of `seal verify` (see VENDORED.md) and inherits exactly that verifier's guarantees and limits — no more.
+- The axiom-footprint line is a per-theorem ceiling for theorems named in the family's axiom-pin gates; it is not a repository-wide census. Pin scope and named exceptions are indexed in the seal claims matrix (seal/docs/CLAIMS-MATRIX.md).
+- seal-verify-action does NOT re-prove the kernel: it re-runs a vendored, sha256-pinned, downstream-stricter fork of `seal verify` (see VENDORED.md); it inherits that verifier's guarantees and limits and adds exactly one stricter requirement — a valid `signed_config` trust anchor for any authorised outcome — nothing weaker.
 - A green build attests that matched receipts authenticated, matched the configured authority, and that every replay-applicable receipt replayed consistently (unparseable-request receipts verify at raw-line-identity scope; coverage is disclosed as `kernel_replay_scope`); it is NOT evidence that the operator chose a good policy, that seal-host is bug-free, or that an unmediated effect left a receipt to check.
 - The action adds no theorem about itself; its trust rests on the pinned verifier bytes and the independently provisioned operator public key, not on receipt-supplied authority claims.
 <!-- claims:end -->
