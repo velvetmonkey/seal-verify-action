@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
-// TEST-ONLY REFERENCE — kit@0aeb35a src/verify.cjs (the trust-ROOTLESS upstream
+// TEST-ONLY REFERENCE — kit@0aeb35a src/verify.cjs semantics plus the canonical
+// received-document call contract (the trust-ROOTLESS upstream
 // verifier: exports { verify, report }, no expected-config-pubkey, no unpinned
 // state, does not require signed_config). Two require/import paths rewritten to
-// reuse the VENDORED kernel closure (byte-identical to kit) + the sibling
+// reuse the VENDORED kernel closure + the sibling
 // reference receipt-format. Used ONLY by cross-copy-differential.test.js to pin
 // the vendored fork vs kit HEAD. NOT shipped, NOT in the VENDORED.md closure.
 // `seal verify <receipt.json>` — independent decision-receipt verification.
@@ -63,9 +64,11 @@ function configSignatureValid(receipt) {
 }
 
 async function verify(receiptPath) {
+  let receiptDocument;
   let receipt;
   try {
-    receipt = JSON.parse(fs.readFileSync(receiptPath, "utf8"));
+    receiptDocument = fs.readFileSync(receiptPath, "utf8");
+    receipt = JSON.parse(receiptDocument);
   } catch (e) {
     console.error(`FAIL  cannot read receipt: ${e.message}`);
     return false;
@@ -87,7 +90,7 @@ async function verify(receiptPath) {
 
   // 0. Schema first (version discriminator, field table, hard split,
   //    stored-line-vs-derived-line equality). Malformed => never reaches the kernel.
-  const shape = F.validateReceipt(receipt);
+  const shape = F.validateReceipt(receiptDocument);
   add(`schema valid (${shape.version || "unrecognized"})`, shape.ok, shape.errors.join("; "));
   if (!shape.ok) return report(checks, receipt, receiptPath);
 

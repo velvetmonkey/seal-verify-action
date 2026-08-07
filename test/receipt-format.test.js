@@ -42,7 +42,7 @@ test("unparseable-request receipt validates clean; fabrication rejected (§11.2)
   assert.deepEqual([v.ok, v.version, v.errors], [true, "v2", []]);
   const current = { ...unp, record_type: "seal.authorization-decision", record_version: 2 };
   delete current.seal_receipt;
-  assert.deepEqual(F.validateReceipt(current), { ok: true, version: "v2", errors: [] });
+  assert.deepEqual(F.validateReceipt(current), { ok: true, version: "v2", errors: [], document_checked: false });
   assert.equal(F.validateReceipt({ ...current, request_sha256: "nothex" }).ok, false);
   for (const [k, vv] of [["tool", "db.execute"], ["arguments", {}],
     ["args_hash", "0".repeat(64)], ["canonical_request", "{}"],
@@ -56,6 +56,28 @@ test("unparseable-request receipt validates clean; fabrication rejected (§11.2)
   assert.equal(F.validateReceipt(noRaw).ok, false);
   assert.equal(F.validateReceipt({ ...unp, bypass: true }).errors
     .some((e) => e.includes("only a mediated receipt")), true);
+});
+
+test("both vendored copies refuse discriminator conflicts and duplicate discriminator documents", async () => {
+  const copies = [
+    await load(),
+    await import("file://" + path.resolve(__dirname, "reference-kit-0aeb35a/receipt-format.js")),
+  ];
+  for (const F of copies) {
+    const receipt = F.assembleReceiptV2(unparseableFields(F));
+    const conflict = F.validateReceipt({
+      ...receipt, record_type: "seal.authorization-decision", record_version: 2,
+    });
+    assert.equal(conflict.ok, false);
+    assert.match(conflict.errors.join("; "), /conflicting version discriminators: seal_receipt \+ record_type\/record_version/);
+
+    const document = JSON.stringify(receipt).replace(
+      '"seal_receipt":"v2"', '"seal_receipt":"v2","seal_receipt":"v2"');
+    const duplicate = F.validateReceipt(document);
+    assert.equal(duplicate.ok, false);
+    assert.equal(duplicate.document_checked, true);
+    assert.match(duplicate.errors.join("; "), /version discriminator "seal_receipt" occurs 2 times/);
+  }
 });
 
 test("verifyReceipt reports the distinct reduced-scope state, never a false match", async () => {
@@ -89,7 +111,7 @@ test("verifyReceipt reports the distinct reduced-scope state, never a false matc
     kernel_identity: { wasm_sha256: kernelSha(), self_verified: true },
     signed_config: signedConfig, kernel_config: JSON.parse(payload), granted_capabilities: [],
   });
-  const r = await verifyReceipt(receipt, { expectedConfigPubkey: CONFIG_PUBKEY });
+  const r = await verifyReceipt(JSON.stringify(receipt), { expectedConfigPubkey: CONFIG_PUBKEY });
   assert.equal(r.formatOk, true, (r.formatErrors || []).join("; "));
   assert.equal(r.requestHashMatch, null, "must be a distinct state, never undefined === undefined -> true");
   assert.equal(r.rawLineIdentity, receipt.request_sha256);
@@ -100,7 +122,7 @@ test("verifyReceipt reports the distinct reduced-scope state, never a false matc
   assert.equal(r.outcome, "authorised-unparseable");
   assert.equal(r.allGood, false, "never a bare PASS");
   // tamper: verdict no longer agrees with the carried kernel material
-  const bad = await verifyReceipt({ ...receipt, verdict: "ALLOW", authorization: "explicit_policy_allow" },
+  const bad = await verifyReceipt(JSON.stringify({ ...receipt, verdict: "ALLOW", authorization: "explicit_policy_allow" }),
     { expectedConfigPubkey: CONFIG_PUBKEY });
   assert.equal(bad.formatOk && bad.outcome !== "failure", false);
 });

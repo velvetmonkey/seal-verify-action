@@ -12,6 +12,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 | version | `0.0.1` |
 | **base kit revision this fork tracks** | `0aeb35a60adfa4c50b6bfcf761967b1c6280fde7` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
+| receipt-format validator body | `seal-check@9ba9db4` (byte-identical after stripping this fork's comment-only header) |
 | kernel wasm (byte-identical to the current fleet build) | `0b5e792500592b56847f70b1e27e47aecdc65023c7c59fd79695102c465f26ec` |
 | verify profile (kit `docs/VERIFY-PROFILES.md`) | `P-ENFORCE` (the base kit's verifier is `P-REF` — that profile split IS the fork) |
 
@@ -47,11 +48,12 @@ it:
 | `kernel/runner.cjs` | signs with the FIXED RFC-8032 test key (not kit's ephemeral key); adds `decideSigned` (verify path: init from the receipt's own `signed_config` envelope, report `signature_valid`) | deterministic verifiable fixtures + the signature-check the verifier performs |
 | `kernel/seal-config.js` | `buildSignedConfig` does real Ed25519 signing with the fixed test key (kit HEAD ships a `demo-pk` stub) | same |
 
-Everything else in these files is at kit `0aeb35a`: the `authority_trusted`-
-forbidden `validateReceipt` guard, the V2 key-order/helper additions, the
-reduced-scope §11.1 handling and kernel-attested request binding are all present
-(no lag). The pin bump to `0aeb35a` records that this fork is now re-based on the
-current kit main; the deltas above are the only intended divergences.
+The fork remains based on kit `0aeb35a`, but `kernel/receipt-format.js` now
+tracks the canonical `seal-check@9ba9db4` validator body modulo its mandatory
+comment-only `FORK DELTA` header. This carries the conflicting-discriminator
+refusal, raw-document validation, and current v3 format support without
+flattening the action's P-ENFORCE behavior. `src/verify.cjs` carries the matching
+raw-document and `unverified-document` outcome contract.
 
 ## Files and checksums
 
@@ -60,9 +62,9 @@ against the working tree on every run (`sha256sum -c`), so a stale or edited
 vendored file fails the build.
 
 ```
-27a475556c6ccf8c18e505457570509879187def01cbba550d941b6da678b45e  src/verify.cjs
+f429d2ddcce6af0df3b7d6b9b1ed502c0658adac9c2b7c1e6a7903d2de43c3bb  src/verify.cjs
 9397adcdc423ce03940040339eace39d06a529f514b978a82ebd83419a48c247  kernel/runner.cjs
-83749603b79002e85df69408773e00af3fd6aaf1ce3ef05222db048ffea91c66  kernel/receipt-format.js
+9f472c09572ce72b2f224580bd9dad650e481f3c3838fc38748a21e878235dc7  kernel/receipt-format.js
 9d36e977f9d7e0d7a715edcb02da17771885f3bfe9ef77081a48064af7edbf66  kernel/kernel.js
 f8dcd7f39bc77151a6433c81ddf0e3c175772550ab30344c0788a5cf33ed45e1  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
@@ -85,8 +87,9 @@ Emscripten glue is `aa6996d…`. Both are copied, never rebuilt here.
 They supersede the base kit revision's `ff1bfd68…` / `4197af01…` pair; the
 fleet repin moves the kernel ahead of kit `0aeb35a`, under the same
 fork-modulo-header contract. The five
-JS files differ from kit `0aeb35a` only by the Fork deltas above (each carries a
-`FORK DELTA` header). The cross-copy differential
+JS files differ from kit `0aeb35a` by the Fork deltas above; the receipt-format
+body additionally tracks canonical `seal-check@9ba9db4` and carries a
+`FORK DELTA` header. The cross-copy differential
 (`test/cross-copy-differential.test.js`) pins the vendored verifier against the
 kit-`0aeb35a` verifier over the pass / reduced-scope / forged / pathological
 receipts: identical verdicts where they must agree, and the one **named pinned

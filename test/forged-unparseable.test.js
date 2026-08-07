@@ -66,7 +66,7 @@ function harness() {
 
 test("forge non-vacuity: reaches the reporting seam as authorised-unparseable", async () => {
   // If the forge were rejected at shape, the exit-code leg would prove nothing.
-  const r = await verifyReceipt(forgedUnparseableAllow(), { expectedConfigPubkey: TEST_PUBKEY });
+  const r = await verifyReceipt(JSON.stringify(forgedUnparseableAllow()), { expectedConfigPubkey: TEST_PUBKEY });
   assert.equal(r.formatOk, true, (r.formatErrors || []).join("; "));
   assert.equal(r.outcome, "authorised-unparseable");
   assert.equal(r.signature_valid, true);
