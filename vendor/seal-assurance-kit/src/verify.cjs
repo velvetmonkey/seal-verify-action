@@ -74,11 +74,14 @@ function blankResult(receipt = null) {
   };
 }
 
-async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
+async function verifyReceipt(input, { expectedConfigPubkey } = {}) {
   const F = await import("file://" + path.resolve(__dirname, "../kernel/receipt-format.js"));
+  const fromDocument = typeof input === "string";
+  const shape = F.validateReceipt(input);
+  const receipt = fromDocument ? (shape.record ?? null) : input;
   const out = blankResult(receipt);
+  out.document_checked = shape.document_checked === true;
 
-  const shape = F.validateReceipt(receipt);
   out.formatOk = shape.ok;
   out.formatVersion = shape.version;
   out.formatErrors = shape.errors;
@@ -225,15 +228,17 @@ async function verifyReceipt(receipt, { expectedConfigPubkey } = {}) {
   // Reduced-scope core for unparseable-request receipts: everything the
   // receipt carries is verified; what it honestly cannot carry (canonical
   // request re-derivation, kernel replay) is excluded rather than failed.
-  out.verificationCore = out.unparseableRequest
+  const checksPassed = out.unparseableRequest
     ? out.formatOk && out.kernelShaMatch && out.bindingOk &&
       out.grantErrors.length === 0 && out.signature_valid &&
       out.kernelMaterialConsistent === true && out.kernelRequestBinding === true
     : out.formatOk && out.kernelShaMatch && out.requestHashMatch &&
       out.bindingOk && out.grantErrors.length === 0 && out.signature_valid &&
       out.kernel_replay_consistent && out.kernelRequestBinding === true;
-  out.outcome = !out.verificationCore || out.authority_trusted === false
+  out.verificationCore = out.document_checked && checksPassed;
+  out.outcome = !checksPassed || out.authority_trusted === false
     ? "failure"
+    : !out.document_checked ? "unverified-document"
     : out.authority_trusted !== true ? "unpinned"
     : out.unparseableRequest ? "authorised-unparseable" : "authorised";
   out.allGood = out.outcome === "authorised";
@@ -269,6 +274,8 @@ function report(result, receiptPath) {
     console.log(result.unparseableRequest
       ? `  FAIL  UNPINNED (authentic, kernel-attested request binding — no replay possible; independently pin ${receipt.signed_config.pubkey})`
       : `  FAIL  UNPINNED (authentic + replay-consistent; independently pin ${receipt.signed_config.pubkey})`);
+  } else if (result.outcome === "unverified-document") {
+    console.log("  FAIL  UNVERIFIED DOCUMENT (object input; no received bytes were checked)");
   } else if (result.notMediated) {
     console.log("  FAIL  NOT MEDIATED (bypass receipt)");
   } else {
@@ -287,16 +294,17 @@ function report(result, receiptPath) {
 }
 
 async function verify(receiptPath, options = {}) {
-  let receipt;
+  let receiptDocument;
   try {
-    receipt = JSON.parse(fs.readFileSync(receiptPath, "utf8"));
+    receiptDocument = fs.readFileSync(receiptPath, "utf8");
+    JSON.parse(receiptDocument);
   } catch (error) {
     const result = blankResult();
     result.readError = `cannot read receipt: ${error.message}`;
     console.error(`FAIL  ${result.readError}`);
     return result;
   }
-  return report(await verifyReceipt(receipt, options), receiptPath);
+  return report(await verifyReceipt(receiptDocument, options), receiptPath);
 }
 
 module.exports = { verify, verifyReceipt };

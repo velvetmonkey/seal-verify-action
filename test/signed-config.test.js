@@ -13,7 +13,15 @@ const genuine = JSON.parse(fs.readFileSync(
 const clone = () => JSON.parse(JSON.stringify(genuine));
 const flip = (s) => (s[0] === "0" ? "1" : "0") + s.slice(1);
 const verify = (receipt, pin = CONFIG_PUBKEY) =>
-  verifyReceipt(receipt, pin === null ? {} : { expectedConfigPubkey: pin });
+  verifyReceipt(JSON.stringify(receipt), pin === null ? {} : { expectedConfigPubkey: pin });
+
+test("object input is capped at unverified-document", async () => {
+  const result = await verifyReceipt(clone(), { expectedConfigPubkey: CONFIG_PUBKEY });
+  assert.equal(result.outcome, "unverified-document");
+  assert.equal(result.verificationCore, false);
+  assert.equal(result.allGood, false);
+  assert.equal(result.document_checked, false);
+});
 
 test("genuine signed_config is authorised only with the independent pin", async () => {
   const authorised = await verify(clone());

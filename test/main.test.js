@@ -121,8 +121,8 @@ test("genuinely inconsistent replay still reports false with full scope", async 
 
 test("unparseable fixture keeps proving the §11.1 rule at the verifier layer", async () => {
   const { verifyReceipt } = require("../vendor/seal-assurance-kit/src/verify.cjs");
-  const receipt = JSON.parse(fs.readFileSync(
-    path.join(REPO, "fixtures/reduced/unparseable.receipt.json"), "utf8"));
+  const receipt = fs.readFileSync(
+    path.join(REPO, "fixtures/reduced/unparseable.receipt.json"), "utf8");
   const r = await verifyReceipt(receipt, { expectedConfigPubkey: TEST_PUBKEY });
   assert.equal(r.outcome, "authorised-unparseable");
   assert.equal(r.unparseableRequest, true);
@@ -139,8 +139,8 @@ test("RED: forged request pairing on an unparseable receipt fails closed", async
   // request_sha256. Before the kernel committed to the judged bytes this
   // forgery VERIFIED — nothing tied request_sha256 to the kernel material.
   const { verifyReceipt } = require("../vendor/seal-assurance-kit/src/verify.cjs");
-  const receipt = JSON.parse(fs.readFileSync(
-    path.join(REPO, "fixtures/fail/forged-binding.receipt.json"), "utf8"));
+  const receipt = fs.readFileSync(
+    path.join(REPO, "fixtures/fail/forged-binding.receipt.json"), "utf8");
   const r = await verifyReceipt(receipt, { expectedConfigPubkey: TEST_PUBKEY });
   assert.equal(r.kernelRequestBinding, false);
   assert.equal(r.outcome, "failure");
