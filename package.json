@@ -10,6 +10,8 @@
   },
   "scripts": {
     "gen:fixtures": "node scripts/gen-fixtures.cjs",
+    "gen:pins": "node scripts/gen-vendored-pins.mjs",
+    "check:pins": "node scripts/gen-vendored-pins.mjs --check",
     "test": "node --test"
   }
 }

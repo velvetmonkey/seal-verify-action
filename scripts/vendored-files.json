@@ -1,0 +1,10 @@
+[
+  "src/verify.cjs",
+  "kernel/runner.cjs",
+  "kernel/receipt-format.js",
+  "kernel/kernel.js",
+  "kernel/seal-config.js",
+  "kernel/package.json",
+  "kernel/wasm/seal.js",
+  "kernel/wasm/seal.wasm"
+]
