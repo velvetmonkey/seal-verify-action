@@ -13,7 +13,7 @@ run is hermetic (no network, no npm install, no version drift at run time).
 | **base kit revision this fork tracks** | `0aeb35a60adfa4c50b6bfcf761967b1c6280fde7` |
 | signed-config semantics | `seal-check@400079cb5ac5d86908095a6f0d26a4ba2d7b0d01` |
 | receipt-format validator body | `seal-check@9ba9db4` (byte-identical after stripping this fork's comment-only header) |
-| kernel wasm (byte-identical to the current fleet build) | `0b5e792500592b56847f70b1e27e47aecdc65023c7c59fd79695102c465f26ec` |
+| kernel wasm (byte-identical to the current fleet build) | `28bb3ae71985357163e3b651791e2a70c462ea5d1313a59b4967d4c20ea77657` |
 | verify profile (kit `docs/VERIFY-PROFILES.md`) | `P-ENFORCE` (the base kit's verifier is `P-REF` — that profile split IS the fork) |
 
 `KIT_COMMIT` (here and in `lib/pin.js`) is the **base kit revision this vendor
@@ -68,8 +68,8 @@ f429d2ddcce6af0df3b7d6b9b1ed502c0658adac9c2b7c1e6a7903d2de43c3bb  src/verify.cjs
 9d36e977f9d7e0d7a715edcb02da17771885f3bfe9ef77081a48064af7edbf66  kernel/kernel.js
 f8dcd7f39bc77151a6433c81ddf0e3c175772550ab30344c0788a5cf33ed45e1  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json
-aa6996d130057815cf493a5097a515c58b89df2ae832f2277110bc66d30cdf17  kernel/wasm/seal.js
-0b5e792500592b56847f70b1e27e47aecdc65023c7c59fd79695102c465f26ec  kernel/wasm/seal.wasm
+801417decfbc49b926a16c9968aa3e77e792abf05eb782ec8ed530325fb8c6c5  kernel/wasm/seal.js
+28bb3ae71985357163e3b651791e2a70c462ea5d1313a59b4967d4c20ea77657  kernel/wasm/seal.wasm
 ```
 
 These eight files are the complete dependency closure of `seal verify`
@@ -82,7 +82,7 @@ gen-receipt,init,policy-sign,receipt-diff,recipes,scan,test,trusted-config}.cjs`
 — kit's scan/test/adequacy/policy-signing CLIs and their support files. The
 action verifies receipts; it does not sign policies or run the kit's dev tooling.
 
-The wasm is byte-identical to the current fleet build (`0b5e7925…`); the
+The wasm is byte-identical to the current fleet build (`28bb3ae7…`); the
 Emscripten glue is `aa6996d…`. Both are copied, never rebuilt here.
 They supersede the base kit revision's `ff1bfd68…` / `4197af01…` pair; the
 fleet repin moves the kernel ahead of kit `0aeb35a`, under the same
