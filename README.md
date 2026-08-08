@@ -5,7 +5,7 @@
 
 **Add this to CI. Green means the signed config is authentic, replay-consistent where replay applies, and authorised by your independently provisioned operator-key pin.**
 
-For every matched receipt the action verifies its exact Ed25519 `signed_config` and requires the signer to match `expected-config-pubkey`; every replay-applicable receipt is replayed through the pinned df42 kernel (§11.1 unparseable-request receipts verify by raw line identity instead, and the coverage is reported as `kernel_replay_scope`). Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
+For every matched receipt the action verifies its exact Ed25519 `signed_config` and requires the signer to match `expected-config-pubkey`; every replay-applicable receipt is replayed through the pinned kernel (`0b5e7925…`, see VENDORED.md) (§11.1 unparseable-request receipts verify by raw line identity instead, and the coverage is reported as `kernel_replay_scope`). Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
 
 ## 10-second onboarding (copy-paste)
 
@@ -122,7 +122,7 @@ There is deliberately no report-only success mode. If a workflow wants to observ
 For each receipt, the verifier checks the receipt is **well-formed**
 (schema-valid), **canonical** (stored canonical request equals the line
 re-derived from the receipt's own tool + arguments, hashes match), and
-**authenticated and re-derivable** (df42 accepts the receipt's exact signed bytes,
+**authenticated and re-derivable** (the pinned kernel accepts the receipt’s exact signed bytes,
 the signed payload byte-binds `kernel_config`, and the same call reproduces the
 verdict and emitted bytes), and **authorised** (the signer matches the independent pin). Bypass receipts
 are reported NOT MEDIATED, never "verified".
