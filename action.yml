@@ -59,7 +59,8 @@ outputs:
   kernel_replay_consistent:
     description: >-
       True only when at least one matched receipt is replay-applicable AND
-      every replay-applicable receipt replays byte-identically through df42.
+      every replay-applicable receipt replays byte-identically through the
+      pinned kernel (see VENDORED.md).
       Unparseable-request receipts (schema §11.1) carry no (tool, arguments),
       are out of replay scope rather than replay failures, and verify at
       raw-line-identity scope instead. Read this together with
