@@ -64,9 +64,24 @@ async function decide(config, { tool, args = {}, approvals = [], now = 1000 }) {
   const parsed = cfg.parseVerdict(raw, tool);
   const computed = kernelSha();
   const sha = { computed, pinned: K.KERNEL_WASM_SHA256, match: computed === K.KERNEL_WASM_SHA256 };
-  const base = JSON.parse(K.canonicalReceiptJson(K.buildReceipt({
-    call: { tool, args, approvals, now }, config, parsed, raw, sha, signedConfig,
-  })));
+  const upstreamReceipt = K.buildReceipt({
+    call: { tool, args, approvals, now }, config, parsed, raw, sha,
+  });
+  // P-ENFORCE fork delta: the upstream P-REF producer deliberately omits
+  // signed_config. Add the authenticated envelope at the action-owned runner
+  // seam so kernel.js can remain byte-identical to the audited kit artifact.
+  const { kernel_config, granted_capabilities, ...receiptHead } = upstreamReceipt;
+  const receipt = {
+    ...receiptHead,
+    signed_config: {
+      payload: signedConfig.payload,
+      signature: signedConfig.signature,
+      pubkey: signedConfig.pubkey,
+    },
+    kernel_config,
+    granted_capabilities,
+  };
+  const base = JSON.parse(K.canonicalReceiptJson(receipt));
   return { raw, verdict: base.verdict, receipt: base };
 }
 

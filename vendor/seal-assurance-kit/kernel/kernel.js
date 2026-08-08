@@ -1,10 +1,4 @@
 // SPDX-License-Identifier: Apache-2.0
-// FORK DELTA (seal-verify-action, tracks kit@0aeb35a but is NOT a byte snapshot):
-// buildReceipt() takes `signedConfig` and emits the `signed_config` object. Kit
-// HEAD dropped signed_config from the kernel path (signing moved to
-// src/policy-sign.cjs); this fork keeps it because the action's verifier requires
-// signed_config for signature_valid / authority_trusted / the exit-code contract.
-// Do NOT flatten to kit HEAD in a vendor-sync sweep. See VENDORED.md "Fork deltas".
 // seal-check kernel glue — the ONLY new logic in seal-check.
 //
 // Loads the compiled black-box seal kernel (wasm/seal.js installs window.SealModule),
@@ -20,13 +14,14 @@ import { buildEnvelope, buildStepInput, parseVerdict, PUBKEY } from "./seal-conf
 import { assembleReceiptV2, canonicalRequest, canonicalRequestSha256 } from "./receipt-format.js";
 
 // --- pinned kernel identity (see AUDIT.md) ----------------------------------
-// sha256 of wasm/seal.wasm, repinned 2026-07-26 to the current fleet build
-// (supersedes the prior 7-kernel policy-bundle DX build, which superseded
-// ff1bfd68, whose 1e9999999999 fail-closed guard is carried forward unchanged;
-// ff1bfd68 superseded d3067bc0, classify-default passthrough on that input). This is
-// THE kernel id and the ONLY thing seal-check verifies in the browser. Toolchain +
-// axioms below are LABELLED provenance the public Lean proofs assert — NOT verified
-// here, NOT blended into the hash.
+// sha256 of wasm/seal.wasm, repinned 2026-07-21 to the P6 byte-carrier kernel
+// (mcp-seal-dev c3bea29 / seal-host 23f92d8; supersedes a3790181, the 7-kernel
+// policy-bundle DX build). The pathological-number fail-closed guard introduced
+// by ff1bfd68 remains carried forward; ff1bfd68 superseded d3067bc0, which
+// returned classify-default passthrough on 1e9999999999. This is THE kernel id
+// and the ONLY thing seal-check verifies in the browser. Toolchain + axioms below
+// are LABELLED provenance the public Lean proofs assert — NOT verified here, NOT
+// blended into the hash.
 export const KERNEL_WASM_SHA256 = "28bb3ae71985357163e3b651791e2a70c462ea5d1313a59b4967d4c20ea77657";
 export const WASM_URL = "wasm/seal.wasm";
 export const LEAN_TOOLCHAIN = "leanprover/lean4:v4.28.0";
@@ -153,7 +148,7 @@ export async function decideSeqRaw(config, steps, tool) {
 // v2 approval block: targets pasted by a human into this page are an
 // "interactive" channel approval with no nonce/issued_at/expiry to assert;
 // args_hash and approval.policy_hash are derived inside the seam.
-export function buildReceipt({ call, config, parsed, raw, sha, signedConfig }) {
+export function buildReceipt({ call, config, parsed, raw, sha }) {
   const verdict = parsed.verdict === "DENY" ? "BLOCK" : parsed.verdict; // ALLOW | BLOCK | ERROR
   const authorization = verdict === "ALLOW"
     ? ((call.approvals || []).length ? "approval" : "explicit_policy_allow")
@@ -189,11 +184,6 @@ export function buildReceipt({ call, config, parsed, raw, sha, signedConfig }) {
       note:
         "What the public Lean proofs ASSERT about the kernel source. NOT verified in " +
         "your browser and NOT part of the hash above.",
-    },
-    signed_config: {
-      payload: signedConfig.payload,
-      signature: signedConfig.signature,
-      pubkey: signedConfig.pubkey,
     },
     kernel_config: config,
     granted_capabilities: (call.approvals || []).map((t) => ({ target: String(t) })),
