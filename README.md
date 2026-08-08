@@ -5,7 +5,7 @@
 
 **Add this to CI. Green means the signed config is authentic, replay-consistent where replay applies, and authorised by your independently provisioned operator-key pin.**
 
-For every matched receipt the action verifies its exact Ed25519 `signed_config` and requires the signer to match `expected-config-pubkey`; every replay-applicable receipt is replayed through the pinned df42 kernel (§11.1 unparseable-request receipts verify by raw line identity instead, and the coverage is reported as `kernel_replay_scope`). Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
+For every matched receipt the action verifies its exact Ed25519 `signed_config` and requires the signer to match `expected-config-pubkey`; every replay-applicable receipt is replayed through the pinned kernel (`28bb3ae7…`, see VENDORED.md) (§11.1 unparseable-request receipts verify by raw line identity instead, and the coverage is reported as `kernel_replay_scope`). Tampered, bypassed, stale, unpinned, or wrongly signed = fail the step.
 
 ## 10-second onboarding (copy-paste)
 
@@ -49,11 +49,11 @@ Bad receipt = red build. Visible in terminal.
 <!-- truthbox:end -->
 > Map: canonical claims in [docs/LIMITATIONS.md](docs/LIMITATIONS.md) · truth box in [docs/TRUTH-BOX.md](docs/TRUTH-BOX.md) · family: [seal](https://github.com/velvetmonkey/seal). Inheritance, not ownership — the verifier's home is [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit) (see [VENDORED.md](VENDORED.md)).
 
-These are the four explicit places where Seal's proofs stop. They are strengths because the boundaries are known and each is closed by a named, auditable mechanism outside the kernel.
+These are the four explicit places where Seal's proofs stop. They are strengths because the boundaries are known and each has a named closure path outside the kernel — closed where stated, still open where stated.
 
-1. Byzantine / non-participating replica — non-bypass proven for replicas that RUN the gate; a replica not running seal is outside the TCB by definition. Closes via: attestation of the sealed core.
-2. Egress after allow (P6) — seal mediates the DECISION and records it, not the downstream effect. Closes via: compose with an egress proxy; decision gate by design. (Already in RUST_BRIDGE.md.)
-3. Model vs compiled binary — proofs bind the routing core the code delegates to (Ffi.stepImpl → composed kernels), not a byte-for-byte proof of the compiled wasm; strongest in category. Closes via: the binary differential (Lane C), a wasm-vs-Lean-decide oracle.
+1. Byzantine / non-participating replica — non-bypass proven for replicas that RUN the gate; a replica not running seal is outside the TCB by definition. Named closure path (not yet implemented): attestation of the sealed core.
+2. Egress after allow (P6) — seal mediates the DECISION and records it, not the downstream effect. Closes via: compose with an egress proxy; decision gate by design. (Already in seal-host's RUST_BRIDGE.md.)
+3. Model vs compiled binary — proofs bind the routing core the code delegates to (Ffi.stepImpl → composed kernels), not a byte-for-byte proof of the compiled wasm. Closure path (Lane C, still open): a wasm-vs-Lean-decide binary differential.
 4. Partition liveness — safety (no double-spend) holds unconditionally under partition; liveness is conditional, inherited from crdt-lean. The correct safety-over-availability tradeoff.
 
 ## Usage
@@ -94,7 +94,8 @@ checks in [What this checks — and what it does not](#what-this-checks--and-wha
 | output | meaning |
 |---|---|
 | `verified` | Count of receipts that are fully authorised. |
-| `failed` | Count that failed: NOT VERIFIED, NOT MEDIATED (bypass receipt), verifier error, or a listed file that does not exist. |
+| `failed` | Count that failed: NOT VERIFIED, NOT MEDIATED (bypass receipt), verifier error, a listed file that does not exist, or a reduced-scope receipt (also counted in `reduced_scope`). |
+| `reduced_scope` | Count at REDUCED SCOPE (schema §11.1 authorised-unparseable): signed config and kernel-attested request binding verify, but the wire line is not re-parseable, so no independent replay — NOT independently verified. Counted within `failed`; the step never passes while this is nonzero. |
 | `signature_valid` | `true` only when every matched receipt has a valid Ed25519 config signature. |
 | `kernel_replay_consistent` | `true` only when at least one matched receipt is replay-applicable AND every replay-applicable receipt replays byte-identically. §11.1 unparseable-request receipts are out of replay scope, not replay failures; a set with nothing replayable reports `false`, never a vacuous `true`. Read alongside `kernel_replay_scope`. |
 | `kernel_replay_scope` | Replay coverage as `applicable/matched` (e.g. `3/4`): how many matched receipts the replay claim actually covered. |
@@ -122,7 +123,7 @@ There is deliberately no report-only success mode. If a workflow wants to observ
 For each receipt, the verifier checks the receipt is **well-formed**
 (schema-valid), **canonical** (stored canonical request equals the line
 re-derived from the receipt's own tool + arguments, hashes match), and
-**authenticated and re-derivable** (df42 accepts the receipt's exact signed bytes,
+**authenticated and re-derivable** (the pinned kernel accepts the receipt’s exact signed bytes,
 the signed payload byte-binds `kernel_config`, and the same call reproduces the
 verdict and emitted bytes), and **authorised** (the signer matches the independent pin). Bypass receipts
 are reported NOT MEDIATED, never "verified".
@@ -180,6 +181,10 @@ deployable gate this action's checks sit downstream of; the vendored verifier's 
 [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit). Family map:
 [seal](https://github.com/velvetmonkey/seal).
 
+_All Seal-family repositories, this one included, are currently private: the links above —
+and `uses: velvetmonkey/seal-verify-action@v1` itself — resolve only for authorised
+evaluators with repository access._
+
 ## Why the action is not bundled
 
 `dist/index.js` is a plain entry, not an ncc/esbuild bundle. The vendored
@@ -196,8 +201,10 @@ npm test          # node --test: glob, reporting, plumbing, end-to-end on fixtur
 ```
 
 The `selftest` workflow runs the action against the bundled fixture corpus:
-three receipts that must authorise, plus bypass, unpinned, and zero-match paths
-that must fail closed. Report-only workflows use step-level `continue-on-error`.
+three receipts that must authorise, plus bypass, forged-binding, unpinned,
+zero-match, reduced-scope (§11.1), and working-directory paths, each asserted
+to land on its documented outcome. Report-only workflows use step-level
+`continue-on-error`.
 
 ## License
 
