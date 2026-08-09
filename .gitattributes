@@ -1,6 +1,7 @@
 # Vendored verifier bytes are SHA-256 pinned in VENDORED.md. Keep the exact
 # bytes in every checkout; in particular, do not let Git for Windows rewrite
 # JavaScript, CommonJS, or JSON line endings to CRLF.
+VENDORED.md -text
 vendor/seal-assurance-kit/src/verify.cjs -text
 vendor/seal-assurance-kit/kernel/runner.cjs -text
 vendor/seal-assurance-kit/kernel/receipt-format.js -text
