@@ -6,7 +6,14 @@ on:
 
 jobs:
   selftest:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
 
@@ -102,5 +109,26 @@ jobs:
         continue-on-error: true
       - name: assert wd outputs
         run: |
+          test "${{ steps.wd.outcome }}" = "failure"
           test "${{ steps.wd.outputs.verified }}" = "3"
           test "${{ steps.wd.outputs.failed }}" = "1"
+
+      - name: verify and physically tamper with a real receipt
+        run: node scripts/windows-e2e.cjs e2e-verdict.json
+      - name: upload deterministic e2e verdict
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ matrix.os }}
+          path: e2e-verdict.json
+
+  compare-e2e:
+    needs: selftest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: e2e-*
+          path: e2e-results
+          merge-multiple: false
+      - run: node scripts/compare-e2e.cjs e2e-results/e2e-ubuntu-latest/e2e-verdict.json e2e-results/e2e-windows-latest/e2e-verdict.json

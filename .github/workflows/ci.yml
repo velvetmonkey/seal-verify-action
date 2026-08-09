@@ -6,7 +6,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,9 +18,16 @@ jobs:
           # matches the action's node20 runtime
           node-version: '20'
       - run: node --check dist/index.js
+        shell: bash
       - run: npm test
+        shell: bash
       - name: npm test must not mutate tracked files
+        shell: bash
         run: |
           test -z "$(git status --porcelain)"
       - name: vendored files must match VENDORED.md pins
         run: npm run check:pins
+        shell: bash
+      - name: print each measured vendored hash
+        run: npm run gen:pins -- --print
+        shell: bash
