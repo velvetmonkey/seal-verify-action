@@ -69,7 +69,7 @@ vendored file fails the build.
 ```
 f429d2ddcce6af0df3b7d6b9b1ed502c0658adac9c2b7c1e6a7903d2de43c3bb  src/verify.cjs
 151d35af30e98a69064715bcdd590fc1197ab926741241e1a7d1eeef6080cf09  kernel/runner.cjs
-9f472c09572ce72b2f224580bd9dad650e481f3c3838fc38748a21e878235dc7  kernel/receipt-format.js
+3f665245abb8fb23405fb16eecf3e569387d53b3cc5c8f3be279b2f93c0910ca  kernel/receipt-format.js
 94c283b153c00135d04f9a2ed6915596ef0a183c89af034a8ee68eaa959f9a0d  kernel/kernel.js
 f8dcd7f39bc77151a6433c81ddf0e3c175772550ab30344c0788a5cf33ed45e1  kernel/seal-config.js
 5a065fe7d8eab2a582f428e11c2ea63aaf70607a54f69cfd5c711b5c53d91b32  kernel/package.json

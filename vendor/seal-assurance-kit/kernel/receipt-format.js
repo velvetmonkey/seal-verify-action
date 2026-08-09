@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
-// FORK DELTA (seal-verify-action, tracks kit@0aeb35a but is NOT a byte snapshot):
-// this copy keeps `signed_config` in V2_KEY_ORDER + SIGNED_CONFIG_KEY_ORDER and
-// validateReceipt REQUIRES a well-formed signed_config on a mediated receipt
-// (forbids it on bypass). Kit's own reference receipt-format documents this as a
-// deliberate downstream-stricter divergence it does NOT port (its
-// signed-config-known-gap: kit emits no signed_config, so requiring it would
-// reject its own producer). Enforcing it here is fail-CLOSED and load-bearing for
-// the action's exit-code contract. Do NOT flatten to kit HEAD in a vendor-sync
-// sweep. See VENDORED.md "Fork deltas".
-// receipt-format.js — the ONE shared implementation of the canonical decision-
-// receipt format (normative spec: docs/DECISION-RECEIPT-SCHEMA.md).
+// receipt-format.js — DERIVED from the canonical seal-check implementation at
+// seal-check/receipt-format.js@9ba9db4; this P-ENFORCE fork is NOT byte-identical.
 //
-// CANONICAL SOURCE. seal-assurance-kit vendors a byte-identical copy at
-// kernel/receipt-format.js (same discipline as its vendored kernel.js /
-// seal-config.js): any change lands HERE first, then is re-copied verbatim.
+// FORK DELTA: this copy keeps `signed_config` in V2_KEY_ORDER +
+// SIGNED_CONFIG_KEY_ORDER and validateReceipt REQUIRES a well-formed
+// signed_config on a mediated receipt (forbids it on bypass). Kit P-REF emits no
+// signed_config, so it deliberately does not port this requirement. Enforcing it
+// here is fail-CLOSED and load-bearing for the action's exit-code contract. Do
+// NOT flatten to kit HEAD in a vendor-sync sweep. See VENDORED.md "Fork deltas".
 //
 // Pure ES module, browser + Node, zero dependencies. This module is the
 // serialization/format seam ONLY — no kernel logic, no decision semantics.
