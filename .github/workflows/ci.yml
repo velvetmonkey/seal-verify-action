@@ -19,6 +19,9 @@ jobs:
           node-version: '20'
       - run: node --check dist/index.js
         shell: bash
+      - name: Check mirrored credibility claims for drift
+        run: node scripts/claims-drift.mjs
+        shell: bash
       - run: npm test
         shell: bash
       - name: npm test must not mutate tracked files
