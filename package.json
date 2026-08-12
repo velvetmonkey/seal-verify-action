@@ -2,7 +2,7 @@
   "name": "seal-verify-action",
   "version": "1.0.0",
   "private": true,
-  "description": "GitHub Action: verify Seal decision receipts by re-deriving each verdict from the receipt's own policy and call",
+  "description": "GitHub Action: verify Seal decision receipts by re-deriving replay-applicable verdicts from the receipt's own policy and call",
   "license": "Apache-2.0",
   "author": "Ben Cassie",
   "engines": {
