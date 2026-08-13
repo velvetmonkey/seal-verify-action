@@ -25,6 +25,11 @@ const BLOCKS = [
     canonical: "docs/TRUTH-BOX.md", mirrors: ["README.md"] },
 ];
 
+const CLAIM_MANIFEST = [
+  ["README.md", "Lane C runs a wasm-vs-interpreted-Lean differential in seal-host CI over a fixed corpus; it is evidence over that corpus, not a universal binary-equals-model proof."],
+  ["package.json", "re-deriving replay-applicable verdicts from the receipt's own policy and call"],
+];
+
 function extract(file, begin, end) {
   let text;
   try {
@@ -80,6 +85,14 @@ for (const blk of BLOCKS) {
       }
     }
   }
+}
+
+for (const [file, claim] of CLAIM_MANIFEST) {
+  let text;
+  try { text = readFileSync(resolve(ROOT, file), "utf8"); }
+  catch (e) { console.error(`ERROR  ${file}: ${e.message}`); process.exit(2); }
+  if (text.includes(claim)) console.log(`PASS  ${file} contains repaired claim`);
+  else { drift = true; console.error(`FAIL  ${file} missing repaired claim: ${claim}`); }
 }
 
 if (drift) {
