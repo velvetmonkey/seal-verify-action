@@ -30,6 +30,7 @@ const CLAIM_MANIFEST = [
   ["package.json", "re-deriving replay-applicable verdicts from the receipt's own policy and call"],
 ];
 
+// FAMILY-SHARED:BEGIN core
 let fatal = false;
 
 function fatalError(message) {
@@ -57,6 +58,7 @@ function extract(file, begin, end) {
   }
   return text.slice(i + begin.length, j);
 }
+// FAMILY-SHARED:END core
 
 // Per-line trim + drop blanks. The claim text contains no HTML tags.
 function normalise(block) {
@@ -67,6 +69,7 @@ function normalise(block) {
     .join("\n");
 }
 
+// FAMILY-SHARED:BEGIN evaluation
 let drift = false;
 for (const blk of BLOCKS) {
   const canonicalBlock = extract(blk.canonical, blk.begin, blk.end);
@@ -121,3 +124,4 @@ if (fatal) {
 if (!drift && !fatal) {
   console.log("all claim blocks in sync across all surfaces");
 }
+// FAMILY-SHARED:END evaluation
