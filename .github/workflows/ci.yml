@@ -22,6 +22,8 @@ jobs:
       - name: Check mirrored credibility claims for drift
         run: node scripts/claims-drift.mjs
         shell: bash
+      - run: node --test test/claims-drift.test.mjs
+        shell: bash
       - run: npm test
         shell: bash
       - name: npm test must not mutate tracked files
