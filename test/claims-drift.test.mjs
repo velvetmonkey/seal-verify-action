@@ -15,14 +15,25 @@ const DRIFT_FILE = readFileSync(README, "utf8").includes(":begin -->")
   : resolve(ROOT, "index.html");
 const UNREADABLE = resolve(ROOT, "docs/.claims-drift-unreadable");
 
-test("fatal manifest read first still reports later drift", () => {
-  const guard = readFileSync(GUARD, "utf8");
-  const readme = readFileSync(DRIFT_FILE, "utf8");
-  const rewritten = guard.replace(
+function withFirstUnreadableManifestEntry(source) {
+  return source.replace(/\r\n/g, "\n").replace(
     "const CLAIM_MANIFEST = [\n",
     'const CLAIM_MANIFEST = [\n  ["docs/.claims-drift-unreadable", "combined-test sentinel"],\n',
   );
-  assert.notEqual(rewritten, guard, "test entry must be first in CLAIM_MANIFEST");
+}
+
+test("manifest injection is line-ending agnostic", () => {
+  const crlfGuard = readFileSync(GUARD, "utf8").replace(/\n/g, "\r\n");
+  const rewritten = withFirstUnreadableManifestEntry(crlfGuard);
+  assert.match(rewritten, /const CLAIM_MANIFEST = \[\n  \["docs\/.claims-drift-unreadable"/);
+});
+
+test("fatal manifest read first still reports later drift", () => {
+  const guard = readFileSync(GUARD, "utf8");
+  const normalisedGuard = guard.replace(/\r\n/g, "\n");
+  const readme = readFileSync(DRIFT_FILE, "utf8");
+  const rewritten = withFirstUnreadableManifestEntry(guard);
+  assert.notEqual(rewritten, normalisedGuard, "test entry must be first in CLAIM_MANIFEST");
   const [, begin, end] = guard.match(/begin: "([^"]+)", end: "([^"]+)"/) ?? [];
   const start = readme.indexOf(begin);
   const finish = readme.indexOf(end, start);
