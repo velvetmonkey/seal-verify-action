@@ -23,7 +23,8 @@ function withFirstUnreadableManifestEntry(source) {
 }
 
 test("manifest injection is line-ending agnostic", () => {
-  const crlfGuard = readFileSync(GUARD, "utf8").replace(/\n/g, "\r\n");
+  const lfGuard = readFileSync(GUARD, "utf8").replace(/\r\n/g, "\n");
+  const crlfGuard = lfGuard.replace(/\n/g, "\r\n");
   const rewritten = withFirstUnreadableManifestEntry(crlfGuard);
   assert.match(rewritten, /const CLAIM_MANIFEST = \[\n  \["docs\/.claims-drift-unreadable"/);
 });
