@@ -181,8 +181,8 @@ deployable gate this action's checks sit downstream of; the vendored verifier's 
 [seal-assurance-kit](https://github.com/velvetmonkey/seal-assurance-kit). Family map:
 [seal](https://github.com/velvetmonkey/seal).
 
-_All Seal-family repositories, this one included, are public and Apache-2.0 licensed: the links
-above — and `uses: velvetmonkey/seal-verify-action@v1` itself — resolve to public repositories._
+_All Seal-family repositories linked above, this one included, are public, so the links above —
+and `uses: velvetmonkey/seal-verify-action@v1` itself — resolve without repository access._
 
 ## Why the action is not bundled
 
