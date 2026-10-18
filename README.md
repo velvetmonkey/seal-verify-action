@@ -1,3 +1,5 @@
+> **ARCHIVED, not maintained.** See [seal](https://github.com/velvetmonkey/seal) for the maintained product.
+
 # seal-verify-action
 
 [![CI](https://github.com/velvetmonkey/seal-verify-action/actions/workflows/ci.yml/badge.svg)](https://github.com/velvetmonkey/seal-verify-action/actions/workflows/ci.yml)
